@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>パチスロ風ゲーム</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="game-container">
+    <div id="bonus-effect" class="hidden">
+      <div id="bonus-message">ボーナス中！</div>
+      <div id="bonus-continue" class="hidden">ボーナス継続！！</div>
+    </div>
+    <div id="lcd-display">モツモツ...</div>
+    <div class="reel-container">
+      <div class="reel" id="reel-left"></div>
+      <div class="reel" id="reel-center"></div>
+      <div class="reel" id="reel-right"></div>
+    </div>
+    <div class="control-buttons">
+      <button id="start-button">回す</button>
+      <button id="stop-1">停止1</button>
+      <button id="stop-2">停止2</button>
+      <button id="stop-3">停止3</button>
+    </div>
+  </div>
+  <div id="debug-log" class="hidden"></div>
+  <script src="script.js"></script>
+</body>
+</html>
