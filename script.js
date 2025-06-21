@@ -32,13 +32,13 @@ let bonusQueue = null;
 let bonusCounter = 0;
 let score = 100;
 const symbolImages = {
-  "モツオ": "images/motuo.png",
-  "赤7": "images/aka7.png",
-  "twins": "images/twins.png",
-  "2枚役": "images/oshinko.png",
-  "10枚役": "images/motsuyaki.png",
-  "15枚役": "images/umewari.png",
-  "リプレイ": "images/replay.png"
+  モツオ: 'images/motuo.PNG',
+  赤7: 'images/aka7.PNG',
+  twins: 'images/twins.PNG',
+  お新香: 'images/oshinko.PNG',
+  モツ焼き: 'images/motsuyaki.PNG',
+  梅割り: 'images/umewari.PNG',
+  リプレイ: 'images/replay.PNG'
 };
 
 const reelElements = [
