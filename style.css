@@ -42,3 +42,9 @@ body {
 .hidden {
   display: none;
 }
+.reel img {
+  width: 100%;
+  height: auto;
+  display: block;
+  object-fit: contain;
+}
