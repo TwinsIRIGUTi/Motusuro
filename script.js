@@ -8,16 +8,13 @@ const reels = [
    "10枚役", "twins", "リプレイ", "2枚役", "10枚役", "リプレイ", "15枚役", "2枚役", "10枚役", "リプレイ", "twins", "2枚役"]
 ];
 
-let currentSymbols = [0, 0, 0];
-let stopOrder = [];
-
 const symbolImages = {
   "モツオ": "images/motuo.PNG",
   "赤7": "images/aka7.PNG",
   "twins": "images/twins.PNG",
-  "お新香": "images/oshinko.PNG",
-  "モツ焼き": "images/motsuyaki.PNG",
-  "梅割り": "images/umewari.PNG",
+  "2枚役": "images/oshinko.PNG",
+  "10枚役": "images/motsuyaki.PNG",
+  "15枚役": "images/umewari.PNG",
   "リプレイ": "images/replay.PNG"
 };
 
@@ -27,15 +24,40 @@ const reelElements = [
   document.getElementById("reel-right")
 ];
 
+let currentSymbols = [0, 0, 0];
+let stopOrder = [];
+let spinning = [false, false, false];
+let spinIntervals = [null, null, null];
+
 function getRandomSymbolIndex(reel) {
   return Math.floor(Math.random() * reels[reel].length);
+}
+
+function startReelSpin(reelIndex) {
+  spinning[reelIndex] = true;
+  spinIntervals[reelIndex] = setInterval(() => {
+    currentSymbols[reelIndex] = getRandomSymbolIndex(reelIndex);
+    updateReelDisplay(reelIndex);
+  }, 100);
+}
+
+function stopReel(reelIndex) {
+  if (spinning[reelIndex]) {
+    clearInterval(spinIntervals[reelIndex]);
+    spinning[reelIndex] = false;
+    updateReelDisplay(reelIndex);
+    stopOrder.push(reelIndex);
+    if (stopOrder.length === 3) {
+      console.log("リール停止：", currentSymbols);
+      stopOrder = [];
+    }
+  }
 }
 
 function spinReels() {
   stopOrder = [];
   for (let i = 0; i < 3; i++) {
-    currentSymbols[i] = getRandomSymbolIndex(i);
-    updateReelDisplay(i);
+    startReelSpin(i);
   }
 }
 
@@ -46,17 +68,12 @@ function updateReelDisplay(reelIndex) {
     const index = (currentSymbols[reelIndex] + i + reels[reelIndex].length) % reels[reelIndex].length;
     const symbol = reels[reelIndex][index];
     const img = document.createElement("img");
-    img.src = symbolImages[symbol];
+    img.src = symbolImages[symbol] || "images/replay.PNG";
+    img.alt = symbol;
+    img.style.width = "100%";
+    img.style.height = "80px";
+    img.style.objectFit = "contain";
     reel.appendChild(img);
-  }
-}
-
-function stopReel(order) {
-  if (!stopOrder.includes(order)) {
-    stopOrder.push(order);
-    if (stopOrder.length === 3) {
-      console.log("リール停止：", currentSymbols);
-    }
   }
 }
 
