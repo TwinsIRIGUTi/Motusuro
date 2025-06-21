@@ -38,9 +38,11 @@ const symbolImages = {
   お新香: 'images/oshinko.PNG',
   モツ焼き: 'images/motsuyaki.PNG',
   梅割り: 'images/umewari.PNG',
-  リプレイ: 'images/replay.PNG'
+  リプレイ: 'images/replay.PNG',
+  "2枚役": 'images/oshinko.PNG',
+  "10枚役": 'images/motsuyaki.PNG',
+  "15枚役": 'images/umewari.PNG'
 };
-
 const reelElements = [
   document.getElementById("reel-left"),
   document.getElementById("reel-center"),
