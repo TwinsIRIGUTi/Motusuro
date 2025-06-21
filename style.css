@@ -1,37 +1,44 @@
-
 body {
-  font-family: sans-serif;
   background: #111;
   color: white;
+  font-family: sans-serif;
   text-align: center;
   margin: 0;
-  padding: 0;
 }
+
 .reel-container {
   display: flex;
   justify-content: center;
-  margin: 20px 0;
+  margin-top: 20px;
 }
+
 .reel {
   width: 100px;
   height: 300px;
+  overflow: hidden;
   margin: 0 10px;
-  background: #333;
   border: 2px solid #fff;
+  background: #000;
+  position: relative;
 }
+
+.reel-inner {
+  position: absolute;
+  top: 0;
+  animation: spin 0.1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-100%); }
+}
+
 .control-buttons button {
-  margin: 5px;
+  margin: 10px;
+  font-size: 18px;
   padding: 10px 20px;
-  font-size: 16px;
 }
-#lcd-display {
-  background: black;
-  color: lime;
-  font-size: 20px;
-  padding: 10px;
-  margin: 10px auto;
-  width: 80%;
-}
+
 .hidden {
   display: none;
 }
