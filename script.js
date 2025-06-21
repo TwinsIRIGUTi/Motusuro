@@ -1,10 +1,20 @@
 const symbols = ["モツオ", "2枚役", "twins", "10枚役", "リプレイ", "15枚役", "赤7"];
 const reels = [
-  [ "モツオ", "2枚役", "twins", "10枚役", "リプレイ", "15枚役", "赤7", "赤7", "赤7", "10枚役", "リプレイ", "15枚役", "twins", "2枚役", "赤7", "10枚役", "リプレイ", "15枚役", "10枚役", "リプレイ", "15枚役" ],
-  [ "モツオ", "リプレイ", "10枚役", "2枚役", "赤7", "リプレイ", "10枚役", "2枚役", "リプレイ", "twins", "2枚役", "10枚役", "15枚役", "リプレイ", "モツオ", "2枚役", "10枚役", "15枚役", "リプレイ", "10枚役", "2枚役" ],
-  [ "モツオ", "10枚役", "リプレイ", "15枚役", "twins", "10枚役", "リプレイ", "15枚役", "赤7", "10枚役", "twins", "リプレイ", "2枚役", "10枚役", "リプレイ", "15枚役", "2枚役", "10枚役", "リプレイ", "twins", "2枚役" ]
+  [
+    "モツオ", "2枚役", "twins", "10枚役", "リプレイ", "15枚役", "赤7", "赤7", "赤7",
+    "10枚役", "リプレイ", "15枚役", "twins", "2枚役", "赤7", "10枚役", "リプレイ", "15枚役", "10枚役", "リプレイ", "15枚役"
+  ],
+  [
+    "モツオ", "リプレイ", "10枚役", "2枚役", "赤7", "リプレイ", "10枚役", "2枚役", "リプレイ",
+    "twins", "2枚役", "10枚役", "15枚役", "リプレイ", "モツオ", "2枚役", "10枚役", "15枚役", "リプレイ", "10枚役", "2枚役"
+  ],
+  [
+    "モツオ", "10枚役", "リプレイ", "15枚役", "twins", "10枚役", "リプレイ", "15枚役", "赤7",
+    "10枚役", "twins", "リプレイ", "2枚役", "10枚役", "リプレイ", "15枚役", "2枚役", "10枚役", "リプレイ", "twins", "2枚役"
+  ]
 ];
 
+// 通常時抽選確率
 const PROB = {
   replay: 1 / 7,
   two: 1 / 7,
@@ -21,6 +31,13 @@ let stopOrder = [];
 let bonusQueue = null;
 let bonusCounter = 0;
 let score = 100;
+
+// 🔁 小役 → 絵柄名変換
+const roleToImage = {
+  "2枚役": "お新香",
+  "10枚役": "モツ焼き",
+  "15枚役": "梅割り"
+};
 
 const symbolImages = {
   モツオ: 'images/motuo.PNG',
@@ -39,21 +56,19 @@ const reelElements = [
 ];
 
 let currentSymbols = [0, 0, 0];
-let spinning = [false, false, false];
-let spinIntervals = [];
+let isSpinning = false;
 
 function getRandomSymbolIndex(reel) {
   return Math.floor(Math.random() * reels[reel].length);
 }
 
 function spinReels() {
+  if (isSpinning) return;
+  isSpinning = true;
   stopOrder = [];
   for (let i = 0; i < 3; i++) {
-    spinning[i] = true;
-    spinIntervals[i] = setInterval(() => {
-      currentSymbols[i] = getRandomSymbolIndex(i);
-      updateReelDisplay(i);
-    }, 100);
+    currentSymbols[i] = getRandomSymbolIndex(i);
+    updateReelDisplay(i);
   }
   playSound("sound-reach");
 }
@@ -63,20 +78,22 @@ function updateReelDisplay(reelIndex) {
   reel.innerHTML = "";
   for (let i = -1; i <= 1; i++) {
     const index = (currentSymbols[reelIndex] + i + reels[reelIndex].length) % reels[reelIndex].length;
-    const symbol = reels[reelIndex][index];
+    let symbol = reels[reelIndex][index];
+
+    // 絵柄に変換（必要なら）
+    if (roleToImage[symbol]) symbol = roleToImage[symbol];
+
     const img = document.createElement("img");
     img.src = symbolImages[symbol];
     img.style.width = "100%";
-    img.style.height = "80px";
+    img.style.height = "auto";
     reel.appendChild(img);
   }
 }
 
 function stopReel(order) {
-  if (!stopOrder.includes(order) && spinning[order]) {
+  if (!stopOrder.includes(order)) {
     stopOrder.push(order);
-    clearInterval(spinIntervals[order]);
-    spinning[order] = false;
     playSound("sound-stop");
     if (stopOrder.length === 3) {
       evaluateResult();
@@ -131,10 +148,14 @@ function evaluateResult() {
   } else if (score >= 1000) {
     alert("ゲームクリア！");
     resetGame();
-  } else if (gameState === "BIG" || gameState === "REG") {
-    bonusCounter--;
-    if (bonusCounter <= 0) endBonus();
+  } else {
+    if (gameState === "BIG" || gameState === "REG") {
+      bonusCounter--;
+      if (bonusCounter <= 0) endBonus();
+    }
   }
+
+  isSpinning = false;
 }
 
 function getPayout(symbol) {
@@ -150,8 +171,7 @@ function getPayout(symbol) {
 function queueBonus(type) {
   if (gameState === "BIG" || gameState === "REG") {
     bonusQueue = type;
-    setLcdMessage("ボーナス継続！！");
-    playSound("continue-bonus");
+    showBonusMessage("ボーナス継続！！");
   } else {
     startBonus(type);
   }
@@ -160,13 +180,13 @@ function queueBonus(type) {
 function startBonus(type) {
   gameState = type;
   bonusCounter = type === "BIG" ? 30 : 10;
-  playSound("start-bonus");
-  setLcdMessage(`${type === "BIG" ? "ビッグボーナス!!" : "twinsボーナス!!"}`);
+  playSound("bgm-bonus");
+  showBonusMessage(type === "BIG" ? "ビッグボーナス!!" : "twinsボーナス!!");
   showPatlamp(true);
 }
 
 function endBonus() {
-  stopSound("start-bonus");
+  stopSound("bgm-bonus");
   if (bonusQueue) {
     const next = bonusQueue;
     bonusQueue = null;
@@ -175,6 +195,7 @@ function endBonus() {
     gameState = "NORMAL";
     setLcdMessage("通常モードへ");
     showPatlamp(false);
+    hideBonusMessage();
   }
 }
 
@@ -182,9 +203,23 @@ function setLcdMessage(text, duration = 2000) {
   const lcd = document.getElementById("lcd-display");
   lcd.textContent = text;
   setTimeout(() => {
-    if (gameState === "BIG" || gameState === "REG") return;
-    lcd.textContent = "モツモツ...";
+    if (gameState === "NORMAL") {
+      lcd.textContent = "モツモツ...";
+    }
   }, duration);
+}
+
+function showBonusMessage(text) {
+  const msgBox = document.getElementById("bonus-message");
+  const contBox = document.getElementById("bonus-continue");
+  msgBox.textContent = text;
+  msgBox.classList.remove("hidden");
+  contBox.classList.add("hidden");
+}
+
+function hideBonusMessage() {
+  document.getElementById("bonus-message").classList.add("hidden");
+  document.getElementById("bonus-continue").classList.add("hidden");
 }
 
 function playSound(id) {
@@ -204,11 +239,8 @@ function stopSound(id) {
 }
 
 function showPatlamp(show) {
-  const container = document.getElementById("patlamp-container");
-  if (container) {
-    if (show) container.classList.add("bonus-active");
-    else container.classList.remove("bonus-active");
-  }
+  const lamp = document.getElementById("bonus-effect");
+  lamp.classList.toggle("hidden", !show);
 }
 
 function resetGame() {
@@ -216,11 +248,16 @@ function resetGame() {
   bonusCounter = 0;
   score = 100;
   bonusQueue = null;
+  isSpinning = false;
   setLcdMessage("モツモツ...");
   showPatlamp(false);
+  hideBonusMessage();
 }
 
-document.getElementById("start-button").addEventListener("click", () => spinReels());
+document.getElementById("start-button").addEventListener("click", () => {
+  spinReels();
+});
+
 document.getElementById("stop-1").addEventListener("click", () => stopReel(0));
 document.getElementById("stop-2").addEventListener("click", () => stopReel(1));
 document.getElementById("stop-3").addEventListener("click", () => stopReel(2));
