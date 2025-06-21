@@ -25,7 +25,6 @@ const reelElements = [
 ];
 
 let currentSymbols = [0, 0, 0];
-let stopOrder = [];
 let spinning = [false, false, false];
 let spinIntervals = [null, null, null];
 
@@ -46,18 +45,27 @@ function stopReel(reelIndex) {
     clearInterval(spinIntervals[reelIndex]);
     spinning[reelIndex] = false;
     updateReelDisplay(reelIndex);
-    stopOrder.push(reelIndex);
-    if (stopOrder.length === 3) {
-      console.log("リール停止：", currentSymbols);
-      stopOrder = [];
+    if (spinning.every(s => !s)) {
+      console.log("全リール停止");
     }
   }
 }
 
-function spinReels() {
-  stopOrder = [];
+function spinReelsSequentially() {
+  stopAllReels();
+  let delay = 0;
   for (let i = 0; i < 3; i++) {
-    startReelSpin(i);
+    setTimeout(() => startReelSpin(i), delay);
+    delay += 300; // 次のリール開始までの時間
+  }
+}
+
+function stopAllReels() {
+  for (let i = 0; i < 3; i++) {
+    if (spinning[i]) {
+      clearInterval(spinIntervals[i]);
+      spinning[i] = false;
+    }
   }
 }
 
@@ -77,7 +85,7 @@ function updateReelDisplay(reelIndex) {
   }
 }
 
-document.getElementById("start-button").addEventListener("click", spinReels);
+document.getElementById("start-button").addEventListener("click", spinReelsSequentially);
 document.getElementById("stop-1").addEventListener("click", () => stopReel(0));
 document.getElementById("stop-2").addEventListener("click", () => stopReel(1));
 document.getElementById("stop-3").addEventListener("click", () => stopReel(2));
