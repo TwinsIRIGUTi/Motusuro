@@ -46,7 +46,10 @@ const symbolImages = {
   お新香: 'images/oshinko.PNG',
   モツ焼き: 'images/motsuyaki.PNG',
   梅割り: 'images/umewari.PNG',
-  リプレイ: 'images/replay.PNG'
+  リプレイ: 'images/replay.PNG',
+  "2枚役": 'images/oshinko.PNG',       // = お新香
+  "10枚役": 'images/motsuyaki.PNG',    // = モツ焼き
+  "15枚役": 'images/umewari.PNG'       // = 梅割り
 };
 
 const reelElements = [
