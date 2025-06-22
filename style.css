@@ -1,74 +1,56 @@
+
 body {
-  margin: 0;
   font-family: sans-serif;
-  background: #111;
-  color: white;
-  text-align: center;
-}
-
-#patlamp-container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 100%;
-  padding: 8px 16px;
-  background: black;
-}
-
-.patlamp {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background-color: red;
-  opacity: 0;
-  animation: patlamp-blink 1s infinite;
-}
-
-.patlamp.left {
-  margin-left: 10px;
-}
-.patlamp.right {
-  margin-right: 10px;
-}
-
-@keyframes patlamp-blink {
-  0% { opacity: 0.2; }
-  50% { opacity: 1; }
-  100% { opacity: 0.2; }
-}
-
-.bonus-active .patlamp {
-  opacity: 1;
-}
-
-#lcd-display {
-  margin: 10px auto;
-  padding: 10px;
   background: #222;
-  font-size: 1.5em;
-  width: 90%;
-  border: 2px solid #fff;
+  color: #fff;
+  text-align: center;
+  margin: 0;
+  padding: 0;
 }
-
+#game-container {
+  max-width: 480px;
+  margin: auto;
+  padding: 10px;
+}
 .reel-container {
   display: flex;
-  justify-content: center;
+  justify-content: space-between;
   margin: 10px 0;
 }
-
 .reel {
-  width: 80px;
-  height: 240px;
+  width: 30%;
+  height: 160px;
   overflow: hidden;
   background: #000;
-  margin: 0 5px;
 }
-
 .reel img {
+  display: block;
   width: 100%;
-  height: 80px;
+  height: 160px;
+  object-fit: contain;
 }
-
-.control-buttons {
-  margin: 20px;
+.control-buttons button {
+  margin: 5px;
+  padding: 10px 20px;
+}
+#lcd-display {
+  margin: 10px 0;
+  font-size: 18px;
+  height: 24px;
+}
+.hidden {
+  display: none;
+}
+.blinking {
+  animation: blink 0.5s step-start infinite;
+}
+@keyframes blink {
+  50% { opacity: 0; }
+}
+#bonus-effect {
+  margin-bottom: 10px;
+}
+#bonus-effect div {
+  font-size: 20px;
+  font-weight: bold;
 }

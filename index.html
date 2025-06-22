@@ -7,16 +7,12 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div id="patlamp-container">
-    <div class="patlamp left"></div>
-    <div class="patlamp right"></div>
-  </div>
   <div id="game-container">
     <div id="bonus-effect" class="hidden">
-      <div id="bonus-message">ボーナス中！</div>
+      <div id="bonus-message" class="hidden">ボーナス中！</div>
       <div id="bonus-continue" class="hidden">ボーナス継続！！</div>
     </div>
-    <div id="lcd-display">モツモツ...</div>
+    <div id="lcd-display"></div>
     <div class="reel-container">
       <div class="reel" id="reel-left"></div>
       <div class="reel" id="reel-center"></div>
@@ -28,10 +24,8 @@
       <button id="stop-2">停止2</button>
       <button id="stop-3">停止3</button>
     </div>
+    <div id="score-display">ポイント: 100</div>
   </div>
-  <audio id="start-bonus" src="sounds/start-bonus.mp3"></audio>
-  <audio id="continue-bonus" src="sounds/continue-bonus.mp3"></audio>
-  <audio id="end-bonus" src="sounds/end-bonus.mp3"></audio>
   <script src="script.js"></script>
 </body>
 </html>
