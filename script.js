@@ -41,7 +41,7 @@ const roleToImage = {
 
 const symbolImages = {
   モツオ: 'images/motuo.png',
-  赤7: 'images/aka7.PNG',
+  赤7: 'images/aka7.png',
   twins: 'images/twins.png',
   お新香: 'images/oshinko.png',
   モツ焼き: 'images/motsuyaki.png',
