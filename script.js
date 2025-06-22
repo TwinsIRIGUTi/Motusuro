@@ -40,16 +40,16 @@ const roleToImage = {
 };
 
 const symbolImages = {
-  モツオ: 'images/motuo.PNG',
+  モツオ: 'images/motuo.png',
   赤7: 'images/aka7.PNG',
-  twins: 'images/twins.PNG',
-  お新香: 'images/oshinko.PNG',
-  モツ焼き: 'images/motsuyaki.PNG',
-  梅割り: 'images/umewari.PNG',
-  リプレイ: 'images/replay.PNG',
-  "2枚役": 'images/oshinko.PNG',       // = お新香
-  "10枚役": 'images/motsuyaki.PNG',    // = モツ焼き
-  "15枚役": 'images/umewari.PNG'       // = 梅割り
+  twins: 'images/twins.png',
+  お新香: 'images/oshinko.png',
+  モツ焼き: 'images/motsuyaki.png',
+  梅割り: 'images/umewari.png',
+  リプレイ: 'images/replay.png',
+  "2枚役": 'images/oshinko.png',       // = お新香
+  "10枚役": 'images/motsuyaki.png',    // = モツ焼き
+  "15枚役": 'images/umewari.png'       // = 梅割り
 };
 
 const reelElements = [
