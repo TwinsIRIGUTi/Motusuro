@@ -31,7 +31,7 @@ function updateScoreDisplay() {
 }
 
 function startSpin() {
-  if (reelSpinning.some(spin => spin)) return; // 回転中防止
+  if (reelSpinning.some(spin => spin)) return;
   document.getElementById("bonus-message").classList.add("hidden");
   document.getElementById("bonus-continue").classList.add("hidden");
   startReels();
@@ -51,7 +51,6 @@ function stopReel(index) {
   if (!reelSpinning[index]) return;
   clearInterval(intervalIds[index]);
   reelSpinning[index] = false;
-
   if (!reelSpinning.includes(true)) {
     evaluateResult();
   }
@@ -96,26 +95,27 @@ function evaluateResult() {
   }
 
   if (matched) {
+    setLcdMessage(`${matched} 揃い！`);
     if (matched === "赤7" || matched === "モツオ") {
-      startBonus("BIG");
+      if (gameState === "BIG" || gameState === "REG") {
+        bonusQueue = "BIG";
+        document.getElementById("bonus-continue").classList.remove("hidden");
+      } else {
+        startBonus("BIG");
+      }
     } else if (matched === "twins") {
-      startBonus("REG");
+      if (gameState === "BIG" || gameState === "REG") {
+        bonusQueue = "REG";
+        document.getElementById("bonus-continue").classList.remove("hidden");
+      } else {
+        startBonus("REG");
+      }
     } else {
       score += getPayout(matched);
     }
-    setLcdMessage(`${matched} 揃い！`);
   } else {
-    for (let line of lines) {
-      const counts = {};
-      line.forEach(s => counts[s] = (counts[s] || 0) + 1);
-      if (Object.values(counts).includes(2)) {
-        setLcdMessage("モツモツ...", 2000, true);
-        break;
-      }
-    }
     score -= 5;
   }
-
   updateScoreDisplay();
 }
 
@@ -128,29 +128,24 @@ function getPayout(symbol) {
   }
 }
 
-function setLcdMessage(text, duration = 2000, blink = false) {
+function setLcdMessage(text, duration = 2000) {
   const lcd = document.getElementById("lcd-display");
   lcd.textContent = text;
-  if (blink) {
-    lcd.classList.add("blinking");
-  } else {
-    lcd.classList.remove("blinking");
-  }
   setTimeout(() => {
     lcd.textContent = "";
-    lcd.classList.remove("blinking");
   }, duration);
 }
 
 function startBonus(type) {
   gameState = type;
   bonusCounter = type === "BIG" ? 30 : 10;
-  const messageEl = document.getElementById("bonus-message");
-  const continueEl = document.getElementById("bonus-continue");
-  messageEl.classList.remove("hidden");
-  continueEl.classList.add("hidden");
+  document.getElementById("bonus-message").classList.remove("hidden");
+  document.getElementById("bonus-continue").classList.add("hidden");
+
   if (bonusQueue) {
-    continueEl.classList.remove("hidden");
+    const next = bonusQueue;
+    bonusQueue = null;
+    setTimeout(() => startBonus(next), 2000);
   }
 }
 

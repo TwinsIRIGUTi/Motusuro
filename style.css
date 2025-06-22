@@ -19,7 +19,7 @@ body {
 }
 .reel {
   width: 30%;
-  height: 160px;
+  height: 480px; /* 3ライン対応 */
   overflow: hidden;
   background: #000;
 }
