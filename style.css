@@ -1,4 +1,3 @@
-
 body {
   font-family: sans-serif;
   background: #222;
@@ -7,49 +6,105 @@ body {
   margin: 0;
   padding: 0;
 }
+
 #game-container {
   max-width: 480px;
   margin: auto;
   padding: 10px;
 }
+
 .reel-container {
   display: flex;
   justify-content: space-between;
   margin: 10px 0;
 }
+
 .reel {
   width: 30%;
-  height: 480px; /* 3ライン対応 */
+  height: 160px;
   overflow: hidden;
   background: #000;
 }
+
 .reel img {
   display: block;
   width: 100%;
   height: 160px;
   object-fit: contain;
+  background-color: white; /* 白背景を明示 */
+  margin: 5px 0; /* 上下に白の間隔を追加 */
 }
-.control-buttons button {
-  margin: 5px;
-  padding: 10px 20px;
+
+.control-buttons {
+  margin-top: 10px;
 }
+
+#start-button {
+  background-color: #444;
+  color: #fff;
+  font-size: 18px;
+  padding: 12px 24px;
+  border-radius: 10px;
+  border: 3px solid #888;
+  box-shadow: 0 4px #222;
+}
+
+.stop-button-group {
+  display: flex;
+  justify-content: space-around;
+  margin-top: 10px;
+}
+
+.stop-button-group .stop-button {
+  background-color: red;
+  color: #fff;
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  border: none;
+  font-size: 14px;
+  font-weight: bold;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.stop-button-group .stop-label {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #fff;
+}
+
 #lcd-display {
   margin: 10px 0;
   font-size: 18px;
   height: 24px;
 }
+
+#score-display {
+  margin-top: 10px;
+  font-size: 16px;
+}
+
 .hidden {
   display: none;
 }
+
 .blinking {
   animation: blink 0.5s step-start infinite;
 }
+
 @keyframes blink {
-  50% { opacity: 0; }
+  50% {
+    opacity: 0;
+  }
 }
+
 #bonus-effect {
   margin-bottom: 10px;
 }
+
 #bonus-effect div {
   font-size: 20px;
   font-weight: bold;
