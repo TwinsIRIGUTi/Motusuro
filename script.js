@@ -1,9 +1,9 @@
+const symbols = ["モツオ", "2枚役", "twins", "10枚役", "リプレイ", "15枚役", "赤7"];
 const reels = [
   ["モツオ", "2枚役", "twins", "10枚役", "リプレイ", "15枚役", "赤7", "赤7", "赤7", "10枚役", "リプレイ", "15枚役", "twins", "2枚役", "赤7", "10枚役", "リプレイ", "15枚役", "10枚役", "リプレイ", "15枚役"],
   ["モツオ", "リプレイ", "10枚役", "2枚役", "赤7", "リプレイ", "10枚役", "2枚役", "リプレイ", "twins", "2枚役", "10枚役", "15枚役", "リプレイ", "モツオ", "2枚役", "10枚役", "15枚役", "リプレイ", "10枚役", "2枚役"],
   ["モツオ", "10枚役", "リプレイ", "15枚役", "twins", "10枚役", "リプレイ", "15枚役", "赤7", "10枚役", "twins", "リプレイ", "2枚役", "10枚役", "リプレイ", "15枚役", "2枚役", "10枚役", "リプレイ", "twins", "2枚役"]
 ];
-
 const symbolImages = {
   モツオ: 'images/motuo.png',
   赤7: 'images/aka7.png',
@@ -30,14 +30,12 @@ function updateScoreDisplay() {
 }
 
 function startSpin() {
-  if (reelSpinning.some(spin => spin)) return;
+  if (reelSpinning.some(spin => spin)) return; // 回転中防止
   document.getElementById("bonus-message").classList.add("hidden");
   document.getElementById("bonus-continue").classList.add("hidden");
-  document.getElementById("lcd-display").textContent = "";
-  startReels();
-}
-
-function startReels() {
+  setLcdMessage(""); // 表示初期化
+  score -= 3; // 回転時に -3
+  updateScoreDisplay();
   for (let i = 0; i < 3; i++) {
     reelSpinning[i] = true;
     intervalIds[i] = setInterval(() => {
@@ -87,57 +85,49 @@ function evaluateResult() {
     [visible[0][2], visible[1][1], visible[2][0]]  // 右上がり
   ];
 
+  let totalPayout = 0;
   let matched = null;
+  let hintDisplayed = false;
+
   for (let line of lines) {
     if (line.every(s => s === line[0])) {
       matched = line[0];
-      break;
-    }
-  }
-
-  if (matched) {
-    setLcdMessage(`${matched} 揃い！`);
-    if (matched === "赤7" || matched === "モツオ") {
-      startBonus("BIG");
-    } else if (matched === "twins") {
-      startBonus("REG");
+      if (matched === "赤7" || matched === "モツオ") {
+        startBonus("BIG");
+        setLcdMessage(`${matched} 揃い！`);
+        return;
+      } else if (matched === "twins") {
+        startBonus("REG");
+        setLcdMessage("twins 揃い！");
+        return;
+      } else {
+        totalPayout += getPayout(matched);
+      }
     } else {
-      score += getPayout(matched);
-    }
-  } else {
-    let flashed = false;
-    for (let line of lines) {
       const counts = {};
       line.forEach(s => counts[s] = (counts[s] || 0) + 1);
-      if (Object.values(counts).includes(2)) {
+      if (Object.values(counts).includes(2) && !hintDisplayed) {
         setLcdMessage("モツモツ...", 2000, true);
-        flashed = true;
-        break;
+        hintDisplayed = true;
       }
     }
-    if (!flashed) score -= 5;
   }
 
+  // 特殊：2枚役の単独条件処理
+  const leftReelSymbols = visible[0];
+  if (leftReelSymbols[1] === "2枚役") totalPayout += 2;
+  if (leftReelSymbols[0] === "2枚役" || leftReelSymbols[2] === "2枚役") totalPayout += 4;
+
+  score += totalPayout;
   updateScoreDisplay();
 }
 
 function getPayout(symbol) {
-  let payout = 0;
-
-  // 2枚役特殊処理
-  const left = reels[0][(currentSymbols[0] + 1) % reels[0].length];
-  if (left === "2枚役") payout += 2;
-
-  const corners = [
-    reels[0][(currentSymbols[0] + 1 + reels[0].length) % reels[0].length],
-    reels[2][(currentSymbols[2] + 1 + reels[2].length) % reels[2].length]
-  ];
-  if (corners.includes("2枚役")) payout += 2;
-
-  if (symbol === "10枚役") payout += 10;
-  if (symbol === "15枚役") payout += 15;
-
-  return payout;
+  switch (symbol) {
+    case "10枚役": return 10;
+    case "15枚役": return 15;
+    default: return 0;
+  }
 }
 
 function setLcdMessage(text, duration = 2000, blink = false) {
@@ -145,26 +135,22 @@ function setLcdMessage(text, duration = 2000, blink = false) {
   lcd.textContent = text;
   if (blink) lcd.classList.add("blinking");
   else lcd.classList.remove("blinking");
-  setTimeout(() => {
-    lcd.textContent = "";
-    lcd.classList.remove("blinking");
-  }, duration);
+
+  if (text) {
+    setTimeout(() => {
+      lcd.textContent = "";
+      lcd.classList.remove("blinking");
+    }, duration);
+  }
 }
 
 function startBonus(type) {
   gameState = type;
   bonusCounter = type === "BIG" ? 30 : 10;
-  const messageEl = document.getElementById("bonus-message");
-  const continueEl = document.getElementById("bonus-continue");
-
-  if (bonusQueue) {
-    continueEl.classList.remove("hidden");
-    messageEl.classList.add("hidden");
-    bonusQueue = null;
-  } else {
-    messageEl.classList.remove("hidden");
-    continueEl.classList.add("hidden");
-  }
+  const msg = document.getElementById("bonus-message");
+  const cont = document.getElementById("bonus-continue");
+  msg.classList.remove("hidden");
+  cont.classList.toggle("hidden", !bonusQueue);
 }
 
 document.getElementById("start-button").addEventListener("click", startSpin);
