@@ -30,12 +30,10 @@ function updateScoreDisplay() {
 }
 
 function startSpin() {
-  if (reelSpinning.some(spin => spin)) return; // 回転中防止
+  if (reelSpinning.some(spin => spin)) return;
   document.getElementById("bonus-message").classList.add("hidden");
   document.getElementById("bonus-continue").classList.add("hidden");
-  setLcdMessage(""); // 表示初期化
-  score -= 3; // 回転時に -3
-  updateScoreDisplay();
+  setLcdMessage("");
   for (let i = 0; i < 3; i++) {
     reelSpinning[i] = true;
     intervalIds[i] = setInterval(() => {
@@ -43,13 +41,14 @@ function startSpin() {
       updateReelDisplay(i);
     }, 100);
   }
+  score -= 3;
+  updateScoreDisplay();
 }
 
 function stopReel(index) {
   if (!reelSpinning[index]) return;
   clearInterval(intervalIds[index]);
   reelSpinning[index] = false;
-
   if (!reelSpinning.includes(true)) {
     evaluateResult();
   }
@@ -78,47 +77,48 @@ function evaluateResult() {
   }
 
   const lines = [
-    [visible[0][1], visible[1][1], visible[2][1]], // 中段
-    [visible[0][0], visible[1][0], visible[2][0]], // 上段
-    [visible[0][2], visible[1][2], visible[2][2]], // 下段
-    [visible[0][0], visible[1][1], visible[2][2]], // 右下がり
-    [visible[0][2], visible[1][1], visible[2][0]]  // 右上がり
+    [visible[0][1], visible[1][1], visible[2][1]],
+    [visible[0][0], visible[1][0], visible[2][0]],
+    [visible[0][2], visible[1][2], visible[2][2]],
+    [visible[0][0], visible[1][1], visible[2][2]],
+    [visible[0][2], visible[1][1], visible[2][0]]
   ];
 
-  let totalPayout = 0;
+  let payout = 0;
   let matched = null;
-  let hintDisplayed = false;
 
   for (let line of lines) {
     if (line.every(s => s === line[0])) {
       matched = line[0];
       if (matched === "赤7" || matched === "モツオ") {
-        startBonus("BIG");
-        setLcdMessage(`${matched} 揃い！`);
-        return;
+        queueBonus("BIG");
       } else if (matched === "twins") {
-        startBonus("REG");
-        setLcdMessage("twins 揃い！");
-        return;
+        queueBonus("REG");
       } else {
-        totalPayout += getPayout(matched);
-      }
-    } else {
-      const counts = {};
-      line.forEach(s => counts[s] = (counts[s] || 0) + 1);
-      if (Object.values(counts).includes(2) && !hintDisplayed) {
-        setLcdMessage("モツモツ...", 2000, true);
-        hintDisplayed = true;
+        payout += getPayout(matched);
       }
     }
   }
 
-  // 特殊：2枚役の単独条件処理
-  const leftReelSymbols = visible[0];
-  if (leftReelSymbols[1] === "2枚役") totalPayout += 2;
-  if (leftReelSymbols[0] === "2枚役" || leftReelSymbols[2] === "2枚役") totalPayout += 4;
+  // 2枚役処理（左リールだけで成立）
+  const leftReel = visible[0];
+  if (leftReel[1] === "2枚役") payout += 2;
+  if (leftReel[0] === "2枚役" || leftReel[2] === "2枚役") payout += 4;
 
-  score += totalPayout;
+  if (payout > 0) {
+    score += payout;
+    setLcdMessage(`${matched ?? "小役"} 揃い！`);
+  } else {
+    const isHot = lines.some(line => {
+      const counts = {};
+      line.forEach(s => counts[s] = (counts[s] || 0) + 1);
+      return Object.values(counts).includes(2);
+    });
+    if (isHot) {
+      setLcdMessage("モツモツ...", 2000, true);
+    }
+  }
+
   updateScoreDisplay();
 }
 
@@ -130,27 +130,20 @@ function getPayout(symbol) {
   }
 }
 
-function setLcdMessage(text, duration = 2000, blink = false) {
-  const lcd = document.getElementById("lcd-display");
-  lcd.textContent = text;
-  if (blink) lcd.classList.add("blinking");
-  else lcd.classList.remove("blinking");
-
-  if (text) {
-    setTimeout(() => {
-      lcd.textContent = "";
-      lcd.classList.remove("blinking");
-    }, duration);
+function queueBonus(type) {
+  if (gameState === "BIG" || gameState === "REG") {
+    bonusQueue = type;
+    document.getElementById("bonus-continue").classList.remove("hidden");
+  } else {
+    startBonus(type);
   }
 }
 
 function startBonus(type) {
   gameState = type;
   bonusCounter = type === "BIG" ? 30 : 10;
-  const msg = document.getElementById("bonus-message");
-  const cont = document.getElementById("bonus-continue");
-  msg.classList.remove("hidden");
-  cont.classList.toggle("hidden", !bonusQueue);
+  document.getElementById("bonus-message").classList.remove("hidden");
+  document.getElementById("bonus-continue").classList.add("hidden");
 }
 
 document.getElementById("start-button").addEventListener("click", startSpin);
@@ -159,3 +152,19 @@ document.getElementById("stop-2").addEventListener("click", () => stopReel(1));
 document.getElementById("stop-3").addEventListener("click", () => stopReel(2));
 
 updateScoreDisplay();
+
+function setLcdMessage(text, duration = 2000, blink = false) {
+  const lcd = document.getElementById("lcd-display");
+  lcd.textContent = text;
+  if (blink) {
+    lcd.classList.add("blinking");
+  } else {
+    lcd.classList.remove("blinking");
+  }
+  if (text) {
+    setTimeout(() => {
+      lcd.textContent = "";
+      lcd.classList.remove("blinking");
+    }, duration);
+  }
+}
