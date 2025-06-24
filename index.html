@@ -8,49 +8,26 @@
 </head>
 <body>
   <div id="game-container">
-    
-    <!-- ボーナス表示エリア -->
     <div id="bonus-effect" class="hidden">
       <div id="bonus-message" class="hidden">ボーナス中！</div>
       <div id="bonus-continue" class="hidden">ボーナス継続！！</div>
     </div>
-
-    <!-- 液晶表示 -->
     <div id="lcd-display"></div>
-
-    <!-- リール -->
     <div class="reel-container">
       <div class="reel" id="reel-left"></div>
       <div class="reel" id="reel-center"></div>
       <div class="reel" id="reel-right"></div>
     </div>
-
-    <!-- ボタン -->
     <div class="control-buttons">
-      <button id="start-button">レバー</button>
-
-      <div class="stop-button-group">
-        <div>
-          <button class="stop-button" id="stop-1">●</button>
-          <div class="stop-label">第1</div>
-        </div>
-        <div>
-          <button class="stop-button" id="stop-2">●</button>
-          <div class="stop-label">第2</div>
-        </div>
-        <div>
-          <button class="stop-button" id="stop-3">●</button>
-          <div class="stop-label">第3</div>
-        </div>
+      <button id="start-button" class="lever-button">回す</button>
+      <div class="stop-buttons">す
+        <button id="stop-1" class="stop-button">停止1</button>
+        <button id="stop-2" class="stop-button">停止2</button>
+        <button id="stop-3" class="stop-button">停止3</button>
       </div>
     </div>
-
-    <!-- スコア表示 -->
     <div id="score-display">ポイント: 100</div>
-
   </div>
-
-  <!-- スクリプト -->
   <script src="script.js"></script>
 </body>
 </html>
