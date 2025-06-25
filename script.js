@@ -17,19 +17,58 @@ const symbolImages = {
   "15枚役": 'images/umewari.png'
 };
 
+const PROB = {
+  replay: 1 / 5,
+  two: 1 / 5,
+  two角: 1 / 8,
+  ten: 1 / 7,
+  fifteen: 1 / 15,
+  big: 1 / 48,
+  reg: 1 / 32,
+  miss: 1 - (1 / 5 + 1 / 5 + 1 / 8 + 1 / 7 + 1 / 15 + 1 / 48 + 1 / 32)
+};
+
 let currentSymbols = [0, 0, 0];
 let reelSpinning = [false, false, false];
 let intervalIds = [null, null, null];
+let gameState = "NORMAL";
 let score = 100;
-let internalBonus = null;
+let bonusFlag = null;
 
 function updateScoreDisplay() {
   document.getElementById("score-display").textContent = `ポイント: ${score}`;
 }
 
+function setLcdMessage(text, duration = 2000, blink = false) {
+  const lcd = document.getElementById("lcd-display");
+  lcd.textContent = text;
+  if (blink) {
+    lcd.classList.add("blinking");
+  } else {
+    lcd.classList.remove("blinking");
+  }
+  setTimeout(() => {
+    lcd.textContent = "";
+    lcd.classList.remove("blinking");
+  }, duration);
+}
+
 function startSpin() {
-  if (reelSpinning.includes(true)) return;
-  evaluateBonusLottery(); // 毎回抽選
+  if (reelSpinning.some(Boolean)) return;
+  bonusFlag = rollBonus();
+  score -= 3;
+  updateScoreDisplay();
+  startReels();
+}
+
+function rollBonus() {
+  const r = Math.random();
+  if (r < PROB.big) return "BIG";
+  if (r < PROB.big + PROB.reg) return "REG";
+  return null;
+}
+
+function startReels() {
   for (let i = 0; i < 3; i++) {
     reelSpinning[i] = true;
     intervalIds[i] = setInterval(() => {
@@ -45,49 +84,44 @@ function stopReel(index) {
   reelSpinning[index] = false;
 
   if (!reelSpinning.includes(true)) {
+    applyBonusSlip();
     evaluateResult();
   }
 }
 
-function updateReelDisplay(reelIndex) {
-  const reel = document.getElementById(["reel-left", "reel-center", "reel-right"][reelIndex]);
+function applyBonusSlip() {
+  if (!bonusFlag) return;
+
+  const targetSymbol = bonusFlag === "BIG" ? "赤7" : "twins";
+  for (let i = 0; i < 3; i++) {
+    const targetIdx = reels[i].findIndex(s => s === targetSymbol);
+    if (targetIdx !== -1) {
+      currentSymbols[i] = targetIdx;
+    }
+  }
+}
+
+function updateReelDisplay(index) {
+  const reel = document.getElementById(["reel-left", "reel-center", "reel-right"][index]);
   reel.innerHTML = "";
-  for (let i = -1; i <= 1; i++) {
-    const idx = (currentSymbols[reelIndex] + i + reels[reelIndex].length) % reels[reelIndex].length;
-    const symbol = reels[reelIndex][idx];
+  for (let offset = -1; offset <= 1; offset++) {
+    const idx = (currentSymbols[index] + offset + reels[index].length) % reels[index].length;
+    const symbol = reels[index][idx];
     const img = document.createElement("img");
-    img.src = symbolImages[symbol];
-    img.style.backgroundColor = "white";
-    img.style.margin = "5px 0";
+    img.src = symbolImages[symbol] || '';
+    img.alt = symbol;
     reel.appendChild(img);
   }
 }
 
-function getVisibleSymbols() {
+function evaluateResult() {
   const visible = [[], [], []];
   for (let i = 0; i < 3; i++) {
-    const pos = currentSymbols[i];
     for (let j = -1; j <= 1; j++) {
-      const idx = (pos + j + reels[i].length) % reels[i].length;
+      const idx = (currentSymbols[i] + j + reels[i].length) % reels[i].length;
       visible[i].push(reels[i][idx]);
     }
   }
-  return visible;
-}
-
-function evaluateBonusLottery() {
-  const rand = Math.random();
-  if (rand < 1 / 48) {
-    internalBonus = "BIG";
-  } else if (rand < (1 / 48 + 1 / 32)) {
-    internalBonus = "REG";
-  } else {
-    internalBonus = null;
-  }
-}
-
-function evaluateResult() {
-  const visible = getVisibleSymbols();
 
   const lines = [
     [visible[0][1], visible[1][1], visible[2][1]],
@@ -97,111 +131,56 @@ function evaluateResult() {
     [visible[0][2], visible[1][1], visible[2][0]]
   ];
 
-  let matched = null;
-
+  let matchedSymbol = null;
   for (const line of lines) {
-    const [a, b, c] = line;
-    if (a === b && b === c) {
-      if (a === "赤7" || a === "モツオ") {
-        matched = "BIG";
+    if (line.every(s => s === line[0])) {
+      matchedSymbol = line[0];
+      if (matchedSymbol === "赤7" || matchedSymbol === "モツオ") {
         score += 200;
-        setLcdMessage(`${a}揃い！ +200`);
-      } else if (a === "twins") {
-        matched = "REG";
+      } else if (matchedSymbol === "twins") {
         score += 100;
-        setLcdMessage("twins揃い！ +100");
-      } else if (a === "リプレイ") {
+      } else if (matchedSymbol === "リプレイ") {
         score += 3;
-        setLcdMessage("再遊戯 +3");
+        setLcdMessage("再遊戯", 1500);
       } else {
-        score += getPayout(a);
-        setLcdMessage(`${a} 揃い +${getPayout(a)}`);
+        score += getPayout(matchedSymbol);
       }
-      break;
+      setLcdMessage(`${matchedSymbol} 揃い！`);
+      updateScoreDisplay();
+      return;
     }
   }
 
-  if (!matched) {
-    // 2枚役（左中段=+2、上下段=+4）
-    const leftCol = visible[0];
-    if (leftCol[1] === "2枚役") {
-      score += 2;
-      setLcdMessage("2枚役 +2");
-    } else if (leftCol[0] === "2枚役" || leftCol[2] === "2枚役") {
-      score += 4;
-      setLcdMessage("角2枚役 +4");
-    } else if (internalBonus) {
-      if (Math.random() < 0.5) {
-        startFullReelAnimation(internalBonus);
-        return;
-      } else {
-        setLcdMessage("ボーナススルー");
-      }
-    } else {
-      score -= 3;
-      setLcdMessage("ハズレ -3");
-    }
+  // 特殊：2枚役が単体で出た場合
+  if (visible[0][1] === "2枚役") {
+    score += 2;
+    setLcdMessage("2枚役！", 1500);
+  } else if (visible[0][0] === "2枚役" || visible[0][2] === "2枚役") {
+    score += 4;
+    setLcdMessage("角2枚役！", 1500);
+  } else {
+    setLcdMessage("モツモツ...", 1000, true);
   }
 
-  internalBonus = null;
   updateScoreDisplay();
 }
 
 function getPayout(symbol) {
   switch (symbol) {
     case "2枚役": return 2;
-    case "10枚役": return 10;
-    case "15枚役": return 15;
+    case "10枚役":
+    case "モツ焼き": return 10;
+    case "15枚役":
+    case "梅割り": return 15;
     default: return 0;
   }
 }
 
-function setLcdMessage(text, duration = 2000, blink = false) {
-  const lcd = document.getElementById("lcd-display");
-  lcd.textContent = text;
-  if (blink) lcd.classList.add("blinking");
-  else lcd.classList.remove("blinking");
-  setTimeout(() => {
-    lcd.textContent = "";
-    lcd.classList.remove("blinking");
-  }, duration);
-}
-
-function startFullReelAnimation(bonusType) {
-  const symbol = bonusType === "BIG"
-    ? (Math.random() < 0.5 ? "モツオ" : "赤7")
-    : "twins";
-
-  let count = 0;
-  const spinInterval = setInterval(() => {
-    for (let i = 0; i < 3; i++) {
-      currentSymbols[i] = (currentSymbols[i] + 1) % reels[i].length;
-      updateReelDisplay(i);
-    }
-    count++;
-    if (count > 20) {
-      clearInterval(spinInterval);
-      forceSetSymbol(symbol);
-    }
-  }, 80);
-}
-
-function forceSetSymbol(symbol) {
-  for (let i = 0; i < 3; i++) {
-    const index = reels[i].findIndex(s => s === symbol);
-    currentSymbols[i] = index !== -1 ? index : 0;
-    updateReelDisplay(i);
-  }
-  const points = symbol === "twins" ? 100 : 200;
-  score += points;
-  setLcdMessage(`全回転！${symbol}揃い +${points}`);
-  updateScoreDisplay();
-  internalBonus = null;
-}
-
+// イベント登録
 document.getElementById("start-button").addEventListener("click", startSpin);
 document.getElementById("stop-1").addEventListener("click", () => stopReel(0));
 document.getElementById("stop-2").addEventListener("click", () => stopReel(1));
 document.getElementById("stop-3").addEventListener("click", () => stopReel(2));
 
+// 初期表示
 updateScoreDisplay();
