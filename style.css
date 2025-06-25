@@ -18,7 +18,7 @@ body {
 }
 .reel {
   width: 30%;
-  height: 480px;
+  height: 160px;
   overflow: hidden;
   background: #000;
 }
@@ -31,43 +31,40 @@ body {
   margin: 5px 0;
 }
 .control-buttons {
-  margin: 10px 0;
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
 }
-.lever-button {
-  background-color: #444;
+#start-button {
+  font-size: 16px;
+  padding: 10px 20px;
+  background-color: #888;
   color: white;
-  padding: 15px 30px;
   border: none;
-  border-radius: 8px;
-  font-size: 18px;
+  border-radius: 4px;
+}
+.stop-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 .stop-button {
   background-color: red;
-  color: white;
   border-radius: 50%;
-  width: 60px;
-  height: 60px;
+  width: 40px;
+  height: 40px;
   border: none;
-  margin: 10px;
+  color: white;
+  font-size: 20px;
 }
 #lcd-display {
   margin: 10px 0;
   font-size: 18px;
   height: 24px;
 }
-.hidden {
-  display: none;
-}
 .blinking {
   animation: blink 0.5s step-start infinite;
 }
 @keyframes blink {
   50% { opacity: 0; }
-}
-#bonus-effect {
-  margin-bottom: 10px;
-}
-#bonus-effect div {
-  font-size: 20px;
-  font-weight: bold;
 }

@@ -8,10 +8,6 @@
 </head>
 <body>
   <div id="game-container">
-    <div id="bonus-effect" class="hidden">
-      <div id="bonus-message" class="hidden">ボーナス中！</div>
-      <div id="bonus-continue" class="hidden">ボーナス継続！！</div>
-    </div>
     <div id="lcd-display"></div>
     <div class="reel-container">
       <div class="reel" id="reel-left"></div>
@@ -19,11 +15,15 @@
       <div class="reel" id="reel-right"></div>
     </div>
     <div class="control-buttons">
-      <button id="start-button" class="lever-button">回す</button>
-      <div class="stop-buttons">す
-        <button id="stop-1" class="stop-button">停止1</button>
-        <button id="stop-2" class="stop-button">停止2</button>
-        <button id="stop-3" class="stop-button">停止3</button>
+      <button id="start-button">レバー</button>
+      <div class="stop-group">
+        <button id="stop-1" class="stop-button">●</button><div>第1</div>
+      </div>
+      <div class="stop-group">
+        <button id="stop-2" class="stop-button">●</button><div>第2</div>
+      </div>
+      <div class="stop-group">
+        <button id="stop-3" class="stop-button">●</button><div>第3</div>
       </div>
     </div>
     <div id="score-display">ポイント: 100</div>
