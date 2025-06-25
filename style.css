@@ -18,7 +18,7 @@ body {
 }
 .reel {
   width: 30%;
-  height: 160px;
+  height: 480px;
   overflow: hidden;
   background: #000;
 }
@@ -30,41 +30,53 @@ body {
   background-color: white;
   margin: 5px 0;
 }
-.control-buttons {
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-}
-#start-button {
-  font-size: 16px;
+.control-buttons button {
+  margin: 5px;
   padding: 10px 20px;
-  background-color: #888;
-  color: white;
-  border: none;
-  border-radius: 4px;
 }
-.stop-group {
+.stop-button-group {
   display: flex;
-  flex-direction: column;
-  align-items: center;
+  justify-content: center;
+  gap: 10px;
 }
 .stop-button {
   background-color: red;
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
   border: none;
+  border-radius: 50%;
   color: white;
+  width: 60px;
+  height: 60px;
   font-size: 20px;
+}
+.stop-button span {
+  display: block;
+  font-size: 12px;
+}
+#start-button {
+  background-color: #444;
+  color: #fff;
+  padding: 15px 30px;
+  font-size: 18px;
+  border-radius: 8px;
 }
 #lcd-display {
   margin: 10px 0;
   font-size: 18px;
   height: 24px;
 }
+.hidden {
+  display: none;
+}
 .blinking {
   animation: blink 0.5s step-start infinite;
 }
 @keyframes blink {
   50% { opacity: 0; }
+}
+#bonus-effect {
+  margin-bottom: 10px;
+}
+#bonus-effect div {
+  font-size: 20px;
+  font-weight: bold;
 }
