@@ -10,9 +10,15 @@ const PROB = {
 };
 
 const reels = [
-  ["モツオ", "2枚役", "twins", "10枚役", "リプレイ", "15枚役", "赤7", "赤7", "赤7", "10枚役", "リプレイ", "15枚役", "twins", "2枚役", "赤7", "10枚役", "リプレイ", "15枚役", "10枚役", "リプレイ", "15枚役"],
-  ["モツオ", "リプレイ", "10枚役", "2枚役", "赤7", "リプレイ", "10枚役", "2枚役", "リプレイ", "twins", "2枚役", "10枚役", "15枚役", "リプレイ", "モツオ", "2枚役", "10枚役", "15枚役", "リプレイ", "10枚役", "2枚役"],
-  ["モツオ", "10枚役", "リプレイ", "15枚役", "twins", "10枚役", "リプレイ", "15枚役", "赤7", "10枚役", "twins", "リプレイ", "2枚役", "10枚役", "リプレイ", "15枚役", "2枚役", "10枚役", "リプレイ", "twins", "2枚役"]
+  // 第1リール（左）
+  ["モツオ", "2枚役", "twins", "10枚役", "リプレイ", "15枚役", "赤7", "赤7", "赤7",
+   "10枚役", "リプレイ", "15枚役", "twins", "2枚役", "赤7", "10枚役", "リプレイ", "15枚役"],
+  // 第2リール（中）
+  ["モツオ", "リプレイ", "10枚役", "2枚役", "赤7", "リプレイ", "10枚役", "2枚役",
+   "リプレイ", "twins", "赤7", "10枚役", "15枚役", "リプレイ", "モツオ", "2枚役", "10枚役", "15枚役"],
+  // 第3リール（右）
+  ["モツオ", "10枚役", "リプレイ", "15枚役", "twins", "10枚役", "リプレイ", "15枚役",
+   "赤7", "10枚役", "twins", "リプレイ", "2枚役", "10枚役", "15枚役", "リプレイ", "twins", "2枚役"]
 ];
 
 const symbolImages = {
@@ -33,8 +39,6 @@ let score = 100;
 let currentSymbols = [0, 0, 0];
 let reelSpinning = [false, false, false];
 let intervalIds = [null, null, null];
-let bonusQueue = null;
-let bonusCounter = 0;
 let internalBonus = null;
 
 function updateScoreDisplay() {
@@ -42,9 +46,8 @@ function updateScoreDisplay() {
 }
 
 function startSpin() {
-  if (reelSpinning.some(spin => spin)) return;
+  if (reelSpinning.some(s => s)) return;
 
-  // ボーナス抽選
   const r = Math.random();
   let sum = 0;
   for (const key of ["big", "reg"]) {
@@ -57,6 +60,7 @@ function startSpin() {
 
   document.getElementById("bonus-message").classList.add("hidden");
   document.getElementById("bonus-continue").classList.add("hidden");
+
   startReels();
   score -= 3;
   updateScoreDisplay();
@@ -82,11 +86,13 @@ function stopReel(index) {
 function updateReelDisplay(reelIndex) {
   const reel = document.getElementById(["reel-left", "reel-center", "reel-right"][reelIndex]);
   reel.innerHTML = "";
+
   for (let i = -1; i <= 1; i++) {
     const idx = (currentSymbols[reelIndex] + i + reels[reelIndex].length) % reels[reelIndex].length;
     const symbol = reels[reelIndex][idx];
     const img = document.createElement("img");
     img.src = symbolImages[symbol];
+    img.alt = symbol;
     reel.appendChild(img);
   }
 }
@@ -119,7 +125,7 @@ function evaluateResult() {
   }
 
   if (matched) {
-    if (matched === "赤7" || matched === "モツオ") {
+    if (["赤7", "モツオ"].includes(matched)) {
       startBonus("BIG");
     } else if (matched === "twins") {
       startBonus("REG");
@@ -131,7 +137,6 @@ function evaluateResult() {
       setLcdMessage(`${matched} 揃い！`);
     }
   } else {
-    // 2枚役特殊判定
     const leftMiddle = visible[0][1];
     const leftTop = visible[0][0];
     const leftBottom = visible[0][2];
@@ -173,7 +178,6 @@ function setLcdMessage(text, duration = 2000) {
 
 function startBonus(type) {
   gameState = type;
-  bonusCounter = type === "BIG" ? 30 : 10;
   document.getElementById("bonus-message").classList.remove("hidden");
   document.getElementById("bonus-message").textContent = type === "BIG" ? "ビッグボーナス!!" : "twinsボーナス!!";
   document.getElementById("bonus-continue").classList.add("hidden");
