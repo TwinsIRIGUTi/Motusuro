@@ -8,34 +8,30 @@
 </head>
 <body>
   <div id="game-container">
+    <img src="images/slot_machine_frame.png" id="frame-image" alt="slot frame" />
+    <div id="bonus-effect" class="hidden">
+      <div id="bonus-message" class="hidden">ボーナス中！</div>
+    </div>
     <div id="lcd-display"></div>
-
     <div class="reel-container">
       <div class="reel" id="reel-left"></div>
       <div class="reel" id="reel-center"></div>
       <div class="reel" id="reel-right"></div>
     </div>
-
     <div class="control-buttons">
-      <button id="start-button">レバー</button>
-
-      <div>
-        <button id="stop-1" class="stop-button">1</button>
-        <div class="stop-label">第1</div>
+      <button id="start-button" class="lever">レバー</button>
+      <div class="stop-button-set">
+        <button id="stop-1" class="stop red-round">●</button><div class="label">第1</div>
       </div>
-      <div>
-        <button id="stop-2" class="stop-button">2</button>
-        <div class="stop-label">第2</div>
+      <div class="stop-button-set">
+        <button id="stop-2" class="stop red-round">●</button><div class="label">第2</div>
       </div>
-      <div>
-        <button id="stop-3" class="stop-button">3</button>
-        <div class="stop-label">第3</div>
+      <div class="stop-button-set">
+        <button id="stop-3" class="stop red-round">●</button><div class="label">第3</div>
       </div>
     </div>
-
-    <div id="score-display">ポイント: 0</div>
+    <div id="score-display">ポイント: 100</div>
   </div>
-
   <script src="script.js"></script>
 </body>
 </html>
