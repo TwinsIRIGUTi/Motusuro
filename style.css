@@ -8,21 +8,14 @@ body {
 }
 
 #game-container {
-  position: relative;
   max-width: 480px;
   margin: auto;
   padding: 10px;
-  background-color: #000;
-  overflow: hidden;
-}
-
-#slot-frame {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: auto;
-  z-index: -1;
+  position: relative;
+  background-image: url('images/slot_machine_frame.png'); /* スロット台背景 */
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
 }
 
 .reel-container {
@@ -33,10 +26,9 @@ body {
 
 .reel {
   width: 30%;
-  height: 480px;
+  height: 160px;
   overflow: hidden;
   background: #000;
-  border: 2px solid #fff;
 }
 
 .reel img {
@@ -44,20 +36,21 @@ body {
   width: 100%;
   height: 160px;
   object-fit: contain;
-  background-color: white;   /* 白背景の明示 */
-  margin: 5px 0;             /* 上下の白スペース */
+  background-color: white;
+  margin: 5px 0;
 }
 
 .control-buttons {
   display: flex;
-  justify-content: space-around;
+  justify-content: center;
+  flex-wrap: wrap;
   margin-top: 10px;
-  position: relative;
 }
 
 .control-buttons button {
+  margin: 5px;
+  padding: 10px 20px;
   font-size: 16px;
-  padding: 12px;
   border: none;
   cursor: pointer;
 }
@@ -65,32 +58,26 @@ body {
 #start-button {
   background-color: #444;
   color: #fff;
-  padding: 12px 40px;
-  border-radius: 6px;
-  font-size: 18px;
-  transform: none; /* 傾きを解除 */
+  font-weight: bold;
+  border-radius: 8px;
 }
 
-#stop-1, #stop-2, #stop-3 {
+.stop-button {
   background-color: red;
   color: white;
-  width: 50px;
-  height: 50px;
   border-radius: 50%;
-  font-size: 20px;
+  width: 60px;
+  height: 60px;
   position: relative;
 }
 
-#stop-1::after,
-#stop-2::after,
-#stop-3::after {
-  content: attr(data-label);
+.stop-label {
   position: absolute;
-  bottom: -20px;
-  left: 50%;
-  transform: translateX(-50%);
+  bottom: -18px;
+  width: 100%;
+  text-align: center;
   font-size: 14px;
-  color: #fff;
+  color: white;
 }
 
 #lcd-display {
@@ -100,20 +87,7 @@ body {
 }
 
 #score-display {
-  font-size: 16px;
+  font-size: 18px;
+  font-weight: bold;
   margin-top: 10px;
-}
-
-.hidden {
-  display: none;
-}
-
-.blinking {
-  animation: blink 0.5s step-start infinite;
-}
-
-@keyframes blink {
-  50% {
-    opacity: 0;
-  }
 }
