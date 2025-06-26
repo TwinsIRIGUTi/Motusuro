@@ -8,36 +8,39 @@ const symbolImages = {
   モツオ: 'images/motuo.png',
   赤7: 'images/aka7.png',
   twins: 'images/twins.png',
+  リプレイ: 'images/replay.png',
   "2枚役": 'images/oshinko.png',
   "10枚役": 'images/motsuyaki.png',
-  "15枚役": 'images/umewari.png',
-  リプレイ: 'images/replay.png'
+  "15枚役": 'images/umewari.png'
 };
 
 let currentSymbols = [0, 0, 0];
 let reelSpinning = [false, false, false];
 let intervalIds = [null, null, null];
-let score = 0;
+let score = 100;
+
+const PROB = {
+  replay: 1 / 5,
+  two: 1 / 5,
+  two角: 1 / 8,
+  ten: 1 / 7,
+  fifteen: 1 / 15,
+  big: 1 / 48,
+  reg: 1 / 32,
+  miss: 1 - (1/5 + 1/5 + 1/8 + 1/7 + 1/15 + 1/48 + 1/32)
+};
 
 function updateScoreDisplay() {
   document.getElementById("score-display").textContent = `ポイント: ${score}`;
-}
-
-function updateReelDisplay(index) {
-  const reelElem = document.getElementById(["reel-left", "reel-center", "reel-right"][index]);
-  reelElem.innerHTML = "";
-  for (let i = -1; i <= 1; i++) {
-    const pos = (currentSymbols[index] + i + reels[index].length) % reels[index].length;
-    const symbol = reels[index][pos];
-    const img = document.createElement("img");
-    img.src = symbolImages[symbol];
-    reelElem.appendChild(img);
+  if (score >= 1000) {
+    setLcdMessage("クリア！！", 2000);
   }
 }
 
 function startSpin() {
-  if (reelSpinning.some(state => state)) return;
-
+  if (reelSpinning.some(Boolean)) return;
+  score -= 3;
+  updateScoreDisplay();
   for (let i = 0; i < 3; i++) {
     reelSpinning[i] = true;
     intervalIds[i] = setInterval(() => {
@@ -45,79 +48,95 @@ function startSpin() {
       updateReelDisplay(i);
     }, 100);
   }
-
-  document.getElementById("lcd-display").textContent = "";
-  score -= 3; // 毎回マイナス3点
-  updateScoreDisplay();
 }
 
 function stopReel(index) {
   if (!reelSpinning[index]) return;
-
   clearInterval(intervalIds[index]);
   reelSpinning[index] = false;
+  if (!reelSpinning.includes(true)) evaluateResult();
+}
 
-  if (!reelSpinning.includes(true)) {
-    evaluateResult();
+function updateReelDisplay(reelIndex) {
+  const reel = document.getElementById(["reel-left", "reel-center", "reel-right"][reelIndex]);
+  reel.innerHTML = "";
+  for (let i = -1; i <= 1; i++) {
+    const idx = (currentSymbols[reelIndex] + i + reels[reelIndex].length) % reels[reelIndex].length;
+    const symbol = reels[reelIndex][idx];
+    const img = document.createElement("img");
+    img.src = symbolImages[symbol];
+    reel.appendChild(img);
   }
 }
 
 function evaluateResult() {
   const visible = [[], [], []];
   for (let i = 0; i < 3; i++) {
-    const base = currentSymbols[i];
+    const pos = currentSymbols[i];
     for (let j = -1; j <= 1; j++) {
-      const idx = (base + j + reels[i].length) % reels[i].length;
+      const idx = (pos + j + reels[i].length) % reels[i].length;
       visible[i].push(reels[i][idx]);
     }
   }
 
   const lines = [
-    [visible[0][1], visible[1][1], visible[2][1]], // 中段
-    [visible[0][0], visible[1][0], visible[2][0]], // 上段
-    [visible[0][2], visible[1][2], visible[2][2]]  // 下段
+    [visible[0][1], visible[1][1], visible[2][1]],
+    [visible[0][0], visible[1][0], visible[2][0]],
+    [visible[0][2], visible[1][2], visible[2][2]],
+    [visible[0][0], visible[1][1], visible[2][2]],
+    [visible[0][2], visible[1][1], visible[2][0]]
   ];
 
-  let matched = null;
-  for (const line of lines) {
-    if (line.every(s => s === line[0])) {
-      matched = line[0];
+  let hit = false;
+  for (let line of lines) {
+    const [a, b, c] = line;
+    if (a === b && b === c) {
+      hit = true;
+      if (a === "赤7" || a === "モツオ") {
+        score += 200;
+        setLcdMessage(`${a}揃い！ +200`);
+      } else if (a === "twins") {
+        score += 100;
+        setLcdMessage(`twins揃い！ +100`);
+      } else if (a === "リプレイ") {
+        score += 3;
+        setLcdMessage("再遊戯", 1500);
+      } else {
+        score += getPayout(a);
+        setLcdMessage(`${a}揃い！ +${getPayout(a)}`);
+      }
       break;
     }
   }
 
-  if (matched === "赤7" || matched === "モツオ") {
-    score += 200;
-    setLcdMessage(`${matched} 揃い！（+200）`);
-  } else if (matched === "twins") {
-    score += 100;
-    setLcdMessage("twins揃い！（+100）");
-  } else if (matched === "リプレイ") {
-    score += 3;
-    setLcdMessage("再遊戯（+3）");
-  } else {
-    // 通常役の個別判定
-    let payout = 0;
-    if (visible[0].includes("2枚役") || visible[1].includes("2枚役") || visible[2].includes("2枚役")) {
-      const isCorner = (visible[0][0] === "2枚役" || visible[0][2] === "2枚役");
-      const twoValue = isCorner ? 4 : 2;
-      payout += twoValue;
-      setLcdMessage(`2枚役 +${twoValue}`, 1500);
-    }
-    if (matched === "10枚役") {
-      payout += 10;
-    } else if (matched === "15枚役") {
-      payout += 15;
-    }
-
-    if (payout > 0) {
-      score += payout;
-    } else {
-      setLcdMessage("ハズレ...");
+  // 2枚役：左中 or 左上/下だけでも加点
+  const left = visible[0];
+  if (!hit) {
+    if (left[1] === "2枚役") {
+      score += 2;
+      setLcdMessage("2枚役 +2", 1500);
+      hit = true;
+    } else if (left[0] === "2枚役" || left[2] === "2枚役") {
+      score += 4;
+      setLcdMessage("角2枚役 +4", 1500);
+      hit = true;
     }
   }
 
+  if (!hit) {
+    setLcdMessage("ハズレ", 1000);
+  }
+
   updateScoreDisplay();
+}
+
+function getPayout(symbol) {
+  switch (symbol) {
+    case "2枚役": return 2;
+    case "10枚役": return 10;
+    case "15枚役": return 15;
+    default: return 0;
+  }
 }
 
 function setLcdMessage(text, duration = 2000) {
