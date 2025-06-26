@@ -8,30 +8,36 @@
 </head>
 <body>
   <div id="game-container">
-    <img src="images/slot_machine_frame.png" id="frame-image" alt="slot frame" />
-    <div id="bonus-effect" class="hidden">
-      <div id="bonus-message" class="hidden">ボーナス中！</div>
-    </div>
+    <!-- スロット台背景画像 -->
+    <img
+      src="https://github.com/TwinsIRIGUTi/Motusuro/blob/main/images/slot_machine_frame.png?raw=true"
+      id="frame-image"
+      alt="slot machine frame"
+    />
+
+    <!-- メッセージ表示（必要なら） -->
     <div id="lcd-display"></div>
+
+    <!-- リール -->
     <div class="reel-container">
       <div class="reel" id="reel-left"></div>
       <div class="reel" id="reel-center"></div>
       <div class="reel" id="reel-right"></div>
     </div>
+
+    <!-- 操作ボタン -->
     <div class="control-buttons">
-      <button id="start-button" class="lever">レバー</button>
-      <div class="stop-button-set">
-        <button id="stop-1" class="stop red-round">●</button><div class="label">第1</div>
-      </div>
-      <div class="stop-button-set">
-        <button id="stop-2" class="stop red-round">●</button><div class="label">第2</div>
-      </div>
-      <div class="stop-button-set">
-        <button id="stop-3" class="stop red-round">●</button><div class="label">第3</div>
+      <button id="start-button" class="lever-button">レバー</button>
+      <div class="stop-buttons">
+        <button id="stop-1" class="stop-button">●<div class="stop-label">第1</div></button>
+        <button id="stop-2" class="stop-button">●<div class="stop-label">第2</div></button>
+        <button id="stop-3" class="stop-button">●<div class="stop-label">第3</div></button>
       </div>
     </div>
+
     <div id="score-display">ポイント: 100</div>
   </div>
+
   <script src="script.js"></script>
 </body>
 </html>
