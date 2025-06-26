@@ -7,37 +7,38 @@ body {
   text-align: center;
 }
 
-.machine {
-  position: relative;
-  width: 360px;
+#game-body {
+  max-width: 400px;
   margin: 0 auto;
-  padding-top: 40px;
+  padding: 20px;
+  background-color: #222;
+  border: 8px solid #444;
+  border-radius: 12px;
+  transition: border-color 0.2s ease;
 }
 
-.machine-bg {
-  width: 100%;
-  height: auto;
-  display: block;
+.flash {
+  animation: flash-border 0.5s alternate 4;
+}
+
+@keyframes flash-border {
+  0% { border-color: #444; }
+  100% { border-color: yellow; }
 }
 
 .reel-container {
-  position: absolute;
-  top: 110px; /* 表示窓に合わせて調整 */
-  left: 35px;
-  width: 290px;
   display: flex;
-  justify-content: space-between;
-  z-index: 2;
+  justify-content: space-around;
+  margin: 20px 0;
 }
 
 .reel {
   width: 80px;
-  height: 90px;
+  height: 240px; /* 3ライン分 */
   background: #fff;
   border: 2px solid #aaa;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
   overflow: hidden;
 }
@@ -45,62 +46,45 @@ body {
 .reel img {
   width: 60px;
   height: 60px;
-  margin: 2px 0;
+  margin: 4px 0;
+  object-fit: contain;
+  background-color: white;
 }
 
 .lcd {
-  position: absolute;
-  top: 215px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 240px;
   height: 30px;
   line-height: 30px;
-  background: #000;
-  border: 2px solid #fff;
-  color: #0f0;
-  z-index: 3;
-}
-
-.lever-button {
-  position: absolute;
-  top: 265px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 3;
+  color: lime;
+  background: black;
+  border: 2px solid #0f0;
+  margin-bottom: 10px;
 }
 
 .lever-button button {
-  padding: 8px 20px;
+  padding: 10px 30px;
   font-size: 18px;
   background: #888;
+  color: white;
   border: none;
-  border-radius: 4px;
-  color: #fff;
+  margin-bottom: 10px;
 }
 
 .stop-buttons {
-  position: absolute;
-  top: 315px;
-  left: 50%;
-  transform: translateX(-50%);
   display: flex;
-  gap: 10px;
-  z-index: 3;
+  justify-content: space-around;
+  margin-bottom: 10px;
 }
 
 .stop-buttons button {
   width: 60px;
   height: 60px;
   background: red;
+  color: white;
   border-radius: 50%;
   border: none;
-  color: #fff;
   font-weight: bold;
-  font-size: 14px;
 }
 
 .score-display {
-  margin-top: 420px;
   font-size: 18px;
 }
