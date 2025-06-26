@@ -8,9 +8,6 @@
 </head>
 <body>
   <div id="game-container">
-    <!-- スロット台背景画像 -->
-    <img src="images/slot_machine_frame.PNG" id="slot-frame" alt="slot frame" />
-
     <div id="lcd-display"></div>
 
     <div class="reel-container">
@@ -21,12 +18,22 @@
 
     <div class="control-buttons">
       <button id="start-button">レバー</button>
-      <button id="stop-1" data-label="第1">●</button>
-      <button id="stop-2" data-label="第2">●</button>
-      <button id="stop-3" data-label="第3">●</button>
+
+      <div>
+        <button id="stop-1" class="stop-button">1</button>
+        <div class="stop-label">第1</div>
+      </div>
+      <div>
+        <button id="stop-2" class="stop-button">2</button>
+        <div class="stop-label">第2</div>
+      </div>
+      <div>
+        <button id="stop-3" class="stop-button">3</button>
+        <div class="stop-label">第3</div>
+      </div>
     </div>
 
-    <div id="score-display">ポイント: 100</div>
+    <div id="score-display">ポイント: 0</div>
   </div>
 
   <script src="script.js"></script>
