@@ -2,40 +2,33 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>パチスロ風ゲーム</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>モツスロ</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
-  <div id="game-container">
-    <!-- スロット台背景画像 -->
-    <img
-      src="https://github.com/TwinsIRIGUTi/Motusuro/blob/main/images/slot_machine_frame.png?raw=true"
-      id="frame-image"
-      alt="slot machine frame"
-    />
-
-    <!-- メッセージ表示（必要なら） -->
-    <div id="lcd-display"></div>
-
-    <!-- リール -->
+  <div class="machine">
+    <img src="images/slot_machine_frame.png" class="machine-bg" alt="スロット台" />
+    
     <div class="reel-container">
       <div class="reel" id="reel-left"></div>
       <div class="reel" id="reel-center"></div>
       <div class="reel" id="reel-right"></div>
     </div>
 
-    <!-- 操作ボタン -->
-    <div class="control-buttons">
-      <button id="start-button" class="lever-button">レバー</button>
-      <div class="stop-buttons">
-        <button id="stop-1" class="stop-button">●<div class="stop-label">第1</div></button>
-        <button id="stop-2" class="stop-button">●<div class="stop-label">第2</div></button>
-        <button id="stop-3" class="stop-button">●<div class="stop-label">第3</div></button>
-      </div>
+    <div class="lcd" id="lcd-display"></div>
+    
+    <div class="lever-button">
+      <button id="start-button">レバー</button>
     </div>
 
-    <div id="score-display">ポイント: 100</div>
+    <div class="stop-buttons">
+      <button id="stop-1">停止1</button>
+      <button id="stop-2">停止2</button>
+      <button id="stop-3">停止3</button>
+    </div>
+
+    <div id="score-display" class="score-display">ポイント: 100</div>
   </div>
 
   <script src="script.js"></script>
