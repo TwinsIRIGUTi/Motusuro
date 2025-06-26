@@ -8,14 +8,14 @@ body {
 }
 
 #game-container {
-  max-width: 480px;
+  position: relative;
+  width: 480px;
+  height: 680px;
   margin: auto;
-  padding: 10px;
-  background: url('images/slot_machine_frame.png') no-repeat center;
-  background-size: contain;
-  background-color: #111;
-  background-position: top center;
-  padding-top: 60px;
+  padding: 60px 10px 10px 10px;
+  background: url('images/slot_machine_frame.PNG') no-repeat center center;
+  background-size: cover;
+  background-color: #000;
 }
 
 .reel-container {
@@ -29,7 +29,9 @@ body {
   height: 480px;
   overflow: hidden;
   background: #000;
-  border: 2px solid #555;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .reel img {
@@ -37,57 +39,62 @@ body {
   width: 100%;
   height: 160px;
   object-fit: contain;
-  background-color: white; /* 白背景で滑り感を表現 */
+  background-color: white;
   margin: 5px 0;
 }
 
 .control-buttons {
   display: flex;
   justify-content: space-around;
-  margin: 10px 0;
   align-items: center;
-}
-
-.control-buttons button {
-  padding: 12px 18px;
-  font-size: 16px;
-  cursor: pointer;
-  border: none;
+  margin: 10px 0;
 }
 
 #start-button {
-  background: linear-gradient(to bottom, #888, #444);
-  border-radius: 8px;
-  box-shadow: 0 4px #222;
-  font-weight: bold;
+  background-color: #666;
   color: white;
+  font-size: 18px;
+  padding: 10px 25px;
+  border-radius: 8px;
+  border: 3px solid #aaa;
+  box-shadow: inset 0 0 5px #000;
+  transform: rotate(-10deg);
+  cursor: pointer;
 }
 
-.stop-button {
+.control-buttons button[id^="stop-"] {
   background-color: red;
   color: white;
-  border-radius: 50%;
   width: 60px;
   height: 60px;
+  border-radius: 50%;
+  border: none;
+  font-size: 18px;
+  font-weight: bold;
   position: relative;
+  cursor: pointer;
 }
 
-.stop-label {
-  display: block;
-  margin-top: 5px;
-  font-size: 14px;
-  color: #fff;
+.control-buttons button[id^="stop-"]::after {
+  content: attr(data-label);
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 12px;
+  color: white;
 }
 
 #lcd-display {
   margin: 10px 0;
-  font-size: 18px;
-  height: 24px;
+  font-size: 20px;
+  height: 28px;
+  font-weight: bold;
 }
 
 #score-display {
+  margin-top: 8px;
   font-size: 18px;
-  margin-top: 10px;
 }
 
 .hidden {
@@ -99,7 +106,14 @@ body {
 }
 
 @keyframes blink {
-  50% {
-    opacity: 0;
-  }
+  50% { opacity: 0; }
+}
+
+#bonus-effect {
+  margin-bottom: 10px;
+}
+
+#bonus-effect div {
+  font-size: 20px;
+  font-weight: bold;
 }
