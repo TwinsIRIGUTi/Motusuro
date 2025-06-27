@@ -2,17 +2,17 @@ const REEL_SYMBOLS = {
   left: [
     'motsuo', 'two', 'twins', 'ten', 'replay', 'fifteen',
     'red7', 'red7', 'red7', 'ten', 'replay', 'twins',
-    'two', 'red7', 'ten', 'replay', 'fifteen'
+    'two', 'red7', 'ten', 'replay', 'fifteen', 'motsuo'
   ],
   center: [
     'motsuo', 'replay', 'ten', 'two', 'red7', 'replay',
     'ten', 'two', 'replay', 'twins', 'red7', 'ten',
-    'fifteen', 'replay', 'motsuo', 'two', 'ten'
+    'fifteen', 'replay', 'motsuo', 'two', 'ten', 'fifteen'
   ],
   right: [
     'motsuo', 'ten', 'replay', 'twins', 'ten', 'replay',
     'fifteen', 'red7', 'ten', 'twins', 'replay', 'red7',
-    'ten', 'fifteen', 'replay', 'twins', 'two'
+    'ten', 'fifteen', 'replay', 'twins', 'two', 'motsuo'
   ]
 };
 
@@ -24,7 +24,7 @@ const PROB = {
   fifteen: 1 / 15,
   big: 1 / 48,
   reg: 1 / 32,
-  miss: 0 // set later dynamically
+  miss: 0 // 後で補完
 };
 
 PROB.miss = 1 - (PROB.replay + PROB.two + PROB.twoCorner + PROB.ten + PROB.fifteen + PROB.big + PROB.reg);
@@ -32,21 +32,41 @@ PROB.miss = 1 - (PROB.replay + PROB.two + PROB.twoCorner + PROB.ten + PROB.fifte
 let score = 100;
 let isSpinning = false;
 let internalBonus = null;
+
 const reels = ['left', 'center', 'right'];
 const reelElems = {
   left: document.getElementById('reel-left'),
   center: document.getElementById('reel-center'),
   right: document.getElementById('reel-right')
 };
-
 const lcd = document.getElementById('lcd-display');
 const scoreDisplay = document.getElementById('score-display');
 const gameBody = document.getElementById('game-body');
 
+function updateScore() {
+  scoreDisplay.textContent = `ポイント: ${score}`;
+  if (score <= 0) {
+    lcd.textContent = 'もう一度？';
+    if (confirm('ゲームオーバー！もう一度遊びますか？')) {
+      score = 100;
+      updateScore();
+      lcd.textContent = '';
+    }
+  }
+}
+
+function getRandomIndex(max) {
+  return Math.floor(Math.random() * max);
+}
+
 function getRandomSymbol(reel) {
   const symbols = REEL_SYMBOLS[reel];
-  const index = Math.floor(Math.random() * symbols.length);
-  return [symbols[(index + 0) % symbols.length], symbols[(index + 1) % symbols.length], symbols[(index + 2) % symbols.length]];
+  const index = getRandomIndex(symbols.length);
+  return [
+    symbols[(index + 17) % symbols.length],
+    symbols[index],
+    symbols[(index + 1) % symbols.length]
+  ];
 }
 
 function updateReelDisplay(reel, symbols) {
@@ -65,46 +85,73 @@ function flashFrame() {
   setTimeout(() => gameBody.classList.remove('flash'), 800);
 }
 
-function handleSpin() {
-  if (isSpinning) return;
+function judgeResult() {
+  const results = {};
+  reels.forEach(reel => {
+    const img = reelElems[reel].querySelectorAll('img')[1];
+    results[reel] = img ? img.alt : '';
+  });
 
-  isSpinning = true;
-  lcd.textContent = '';
-  score -= 3;
-  updateScore();
+  const combo = [results.left, results.center, results.right];
+  const allSame = combo.every(s => s === combo[0]);
 
-  // 抽選処理
-  const rand = Math.random();
-  let sum = 0;
-  for (let key in PROB) {
-    sum += PROB[key];
-    if (rand < sum) {
-      internalBonus = key;
-      break;
+  if (allSame) {
+    switch (combo[0]) {
+      case 'replay':
+        lcd.textContent = '再遊戯';
+        score += 3;
+        flashFrame();
+        break;
+      case 'two':
+        lcd.textContent = '2枚役';
+        score += 2;
+        flashFrame();
+        break;
+      case 'ten':
+        lcd.textContent = '10枚役';
+        score += 10;
+        flashFrame();
+        break;
+      case 'fifteen':
+        lcd.textContent = '15枚役';
+        score += 15;
+        flashFrame();
+        break;
+      case 'red7':
+      case 'motsuo':
+        lcd.textContent = 'ビッグボーナス';
+        score += 200;
+        flashFrame();
+        break;
+      case 'twins':
+        lcd.textContent = 'レギュラーボーナス';
+        score += 100;
+        flashFrame();
+        break;
+      default:
+        lcd.textContent = `${combo[0]}揃い`;
     }
+  } else {
+    lcd.textContent = '';
   }
 
-  if (internalBonus === 'miss') {
-    internalBonus = null;
-  }
-
-  spinAllReels();
+  updateScore();
 }
 
-function spinAllReels() {
+function spinReels() {
   const stopped = {};
   reels.forEach(reel => {
     stopped[reel] = false;
-    updateReelDisplay(reel, ['replay', 'replay', 'replay']); // 初期仮表示
+    updateReelDisplay(reel, ['replay', 'replay', 'replay']);
   });
 
-  const stopButtons = [
+  const stopBtns = [
     document.getElementById('stop-1'),
     document.getElementById('stop-2'),
     document.getElementById('stop-3')
   ];
 
-  stopButtons.forEach((btn, idx) => {
+  stopBtns.forEach((btn, idx) => {
     btn.disabled = false;
     btn.onclick = () => {
       const reel = reels[idx];
@@ -114,7 +161,7 @@ function spinAllReels() {
       updateReelDisplay(reel, symbols);
       stopped[reel] = true;
 
-      if (Object.values(stopped).every(v => v)) {
+      if (Object.values(stopped).every(val => val)) {
         isSpinning = false;
         judgeResult();
       }
@@ -122,60 +169,25 @@ function spinAllReels() {
   });
 }
 
-function updateScore() {
-  scoreDisplay.textContent = `ポイント: ${score}`;
-  if (score <= 0) {
-    lcd.textContent = 'もう一度？';
-    const restart = confirm('ゲームオーバー！もう一度遊びますか？');
-    if (restart) {
-      score = 100;
-      internalBonus = null;
-      updateScore();
-      lcd.textContent = '';
-    }
-  }
-}
-
-function judgeResult() {
-  const results = {};
-  reels.forEach(reel => {
-    const children = reelElems[reel].children;
-    results[reel] = children[1]?.alt || '';
-  });
-
-  const combo = [results.left, results.center, results.right];
-  const allSame = combo.every(val => val === combo[0]);
-
-  if (combo.includes('replay') && allSame) {
-    lcd.textContent = '再遊戯';
-    score += 3;
-    flashFrame();
-  } else if (combo.includes('two') && combo.filter(v => v === 'two').length >= 2) {
-    lcd.textContent = '2枚役';
-    score += 2;
-    flashFrame();
-  } else if (allSame) {
-    if (combo[0] === 'ten') {
-      lcd.textContent = '10枚役';
-      score += 10;
-    } else if (combo[0] === 'fifteen') {
-      lcd.textContent = '15枚役';
-      score += 15;
-    } else if (combo[0] === 'motsuo' || combo[0] === 'red7') {
-      lcd.textContent = 'ビッグボーナス';
-      score += 200;
-    } else if (combo[0] === 'twins') {
-      lcd.textContent = 'レギュラーボーナス';
-      score += 100;
-    } else {
-      lcd.textContent = `${combo[0]}揃い`;
-    }
-    flashFrame();
-  } else {
-    lcd.textContent = '';
-  }
-
+function handleSpin() {
+  if (isSpinning) return;
+  isSpinning = true;
+  lcd.textContent = '';
+  score -= 3;
   updateScore();
+
+  const rand = Math.random();
+  let acc = 0;
+  for (const key in PROB) {
+    acc += PROB[key];
+    if (rand < acc) {
+      internalBonus = key;
+      break;
+    }
+  }
+  if (internalBonus === 'miss') internalBonus = null;
+
+  spinReels();
 }
 
 document.getElementById('start-button').addEventListener('click', handleSpin);
