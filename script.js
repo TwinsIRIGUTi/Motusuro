@@ -1,193 +1,154 @@
-const REEL_SYMBOLS = {
-  left: [
-    'motsuo', 'two', 'twins', 'ten', 'replay', 'fifteen',
-    'red7', 'red7', 'red7', 'ten', 'replay', 'twins',
-    'two', 'red7', 'ten', 'replay', 'fifteen', 'motsuo'
-  ],
-  center: [
-    'motsuo', 'replay', 'ten', 'two', 'red7', 'replay',
-    'ten', 'two', 'replay', 'twins', 'red7', 'ten',
-    'fifteen', 'replay', 'motsuo', 'two', 'ten', 'fifteen'
-  ],
-  right: [
-    'motsuo', 'ten', 'replay', 'twins', 'ten', 'replay',
-    'fifteen', 'red7', 'ten', 'twins', 'replay', 'red7',
-    'ten', 'fifteen', 'replay', 'twins', 'two', 'motsuo'
-  ]
+const symbols = {
+  replay: 'images/replay.png',
+  two: 'images/2mai.png',
+  four: 'images/4mai.png',
+  ten: 'images/10mai.png',
+  fifteen: 'images/15mai.png',
+  red7: 'images/red7.png',
+  motuo: 'images/motuo.png',
+  twins: 'images/twins.png',
+  bonus: 'images/bonus.png'
 };
 
-const PROB = {
-  replay: 1 / 5,
-  two: 1 / 5,
-  twoCorner: 1 / 8,
-  ten: 1 / 7,
-  fifteen: 1 / 15,
-  big: 1 / 48,
-  reg: 1 / 32,
-  miss: 0 // 後で補完
-};
+const reels = [
+  ['motuo','two','twins','ten','replay','fifteen','red7','red7','red7','ten','replay','twins','two','red7','ten','replay','fifteen'],
+  ['motuo','replay','ten','two','red7','replay','ten','two','replay','twins','red7','ten','fifteen','replay','motuo','two','ten'],
+  ['motuo','ten','replay','twins','ten','replay','fifteen','red7','ten','twins','replay','red7','ten','fifteen','replay','twins','two']
+];
 
-PROB.miss = 1 - (PROB.replay + PROB.two + PROB.twoCorner + PROB.ten + PROB.fifteen + PROB.big + PROB.reg);
-
+let positions = [0, 0, 0];
+let spinning = [false, false, false];
+let intervalIds = [null, null, null];
 let score = 100;
-let isSpinning = false;
-let internalBonus = null;
+let messageTimeout = null;
 
-const reels = ['left', 'center', 'right'];
-const reelElems = {
-  left: document.getElementById('reel-left'),
-  center: document.getElementById('reel-center'),
-  right: document.getElementById('reel-right')
-};
-const lcd = document.getElementById('lcd-display');
-const scoreDisplay = document.getElementById('score-display');
-const gameBody = document.getElementById('game-body');
-
-function updateScore() {
-  scoreDisplay.textContent = `ポイント: ${score}`;
-  if (score <= 0) {
-    lcd.textContent = 'もう一度？';
-    if (confirm('ゲームオーバー！もう一度遊びますか？')) {
-      score = 100;
-      updateScore();
-      lcd.textContent = '';
-    }
-  }
-}
-
-function getRandomIndex(max) {
-  return Math.floor(Math.random() * max);
-}
-
-function getRandomSymbol(reel) {
-  const symbols = REEL_SYMBOLS[reel];
-  const index = getRandomIndex(symbols.length);
-  return [
-    symbols[(index + 17) % symbols.length],
-    symbols[index],
-    symbols[(index + 1) % symbols.length]
-  ];
-}
-
-function updateReelDisplay(reel, symbols) {
-  const elem = reelElems[reel];
-  elem.innerHTML = '';
-  symbols.forEach(sym => {
+function drawReel(reelIndex) {
+  const reel = document.getElementById(`reel${reelIndex + 1}`);
+  reel.innerHTML = '';
+  for (let i = 0; i < 3; i++) {
     const img = document.createElement('img');
-    img.src = `images/${sym}.png`;
-    img.alt = sym;
-    elem.appendChild(img);
-  });
-}
-
-function flashFrame() {
-  gameBody.classList.add('flash');
-  setTimeout(() => gameBody.classList.remove('flash'), 800);
-}
-
-function judgeResult() {
-  const results = {};
-  reels.forEach(reel => {
-    const img = reelElems[reel].querySelectorAll('img')[1];
-    results[reel] = img ? img.alt : '';
-  });
-
-  const combo = [results.left, results.center, results.right];
-  const allSame = combo.every(s => s === combo[0]);
-
-  if (allSame) {
-    switch (combo[0]) {
-      case 'replay':
-        lcd.textContent = '再遊戯';
-        score += 3;
-        flashFrame();
-        break;
-      case 'two':
-        lcd.textContent = '2枚役';
-        score += 2;
-        flashFrame();
-        break;
-      case 'ten':
-        lcd.textContent = '10枚役';
-        score += 10;
-        flashFrame();
-        break;
-      case 'fifteen':
-        lcd.textContent = '15枚役';
-        score += 15;
-        flashFrame();
-        break;
-      case 'red7':
-      case 'motsuo':
-        lcd.textContent = 'ビッグボーナス';
-        score += 200;
-        flashFrame();
-        break;
-      case 'twins':
-        lcd.textContent = 'レギュラーボーナス';
-        score += 100;
-        flashFrame();
-        break;
-      default:
-        lcd.textContent = `${combo[0]}揃い`;
-    }
-  } else {
-    lcd.textContent = '';
+    const symbol = reels[reelIndex][(positions[reelIndex] + i) % reels[reelIndex].length];
+    img.src = symbols[symbol];
+    reel.appendChild(img);
   }
-
-  updateScore();
 }
 
-function spinReels() {
-  const stopped = {};
-  reels.forEach(reel => {
-    stopped[reel] = false;
-    updateReelDisplay(reel, ['replay', 'replay', 'replay']);
-  });
-
-  const stopBtns = [
-    document.getElementById('stop-1'),
-    document.getElementById('stop-2'),
-    document.getElementById('stop-3')
-  ];
-
-  stopBtns.forEach((btn, idx) => {
-    btn.disabled = false;
-    btn.onclick = () => {
-      const reel = reels[idx];
-      if (stopped[reel]) return;
-
-      const symbols = getRandomSymbol(reel);
-      updateReelDisplay(reel, symbols);
-      stopped[reel] = true;
-
-      if (Object.values(stopped).every(val => val)) {
-        isSpinning = false;
-        judgeResult();
-      }
-    };
-  });
+function spin(reelIndex) {
+  spinning[reelIndex] = true;
+  intervalIds[reelIndex] = setInterval(() => {
+    positions[reelIndex] = (positions[reelIndex] + 1) % reels[reelIndex].length;
+    drawReel(reelIndex);
+  }, 100);
 }
 
-function handleSpin() {
-  if (isSpinning) return;
-  isSpinning = true;
-  lcd.textContent = '';
+function stop(reelIndex) {
+  clearInterval(intervalIds[reelIndex]);
+  spinning[reelIndex] = false;
+  drawReel(reelIndex);
+  checkAllStopped();
+}
+
+function startSpin() {
+  if (spinning.includes(true)) return;
   score -= 3;
   updateScore();
-
-  const rand = Math.random();
-  let acc = 0;
-  for (const key in PROB) {
-    acc += PROB[key];
-    if (rand < acc) {
-      internalBonus = key;
-      break;
-    }
+  for (let i = 0; i < 3; i++) {
+    spin(i);
   }
-  if (internalBonus === 'miss') internalBonus = null;
-
-  spinReels();
+  clearMessage();
 }
 
-document.getElementById('start-button').addEventListener('click', handleSpin);
+function checkAllStopped() {
+  if (spinning.every(s => !s)) {
+    evaluate();
+  }
+}
+
+function evaluate() {
+  const top = [], mid = [], bot = [];
+  for (let i = 0; i < 3; i++) {
+    const len = reels[i].length;
+    top.push(reels[i][positions[i] % len]);
+    mid.push(reels[i][(positions[i] + 1) % len]);
+    bot.push(reels[i][(positions[i] + 2) % len]);
+  }
+
+  let matched = false;
+
+  const lines = [top, mid, bot];
+  for (const line of lines) {
+    const [a,b,c] = line;
+    if (a === b && b === c) {
+      matched = true;
+      switch (a) {
+        case 'red7':
+        case 'motuo':
+          score += 200;
+          showMessage('ビッグボーナス！');
+          break;
+        case 'twins':
+          score += 100;
+          showMessage('レギュラーボーナス！');
+          break;
+        case 'replay':
+          score += 3;
+          showMessage('再遊戯');
+          break;
+        case 'two':
+          score += 2;
+          showMessage('2枚役！');
+          break;
+        case 'four':
+          score += 4;
+          showMessage('4枚役！');
+          break;
+        case 'ten':
+          score += 10;
+          showMessage('10枚役！');
+          break;
+        case 'fifteen':
+          score += 15;
+          showMessage('15枚役！');
+          break;
+      }
+    }
+  }
+
+  if (!matched) showMessage('ハズレ');
+  updateScore();
+  checkGameOver();
+}
+
+function updateScore() {
+  document.getElementById('score').textContent = `ポイント：${score}`;
+}
+
+function showMessage(text) {
+  clearTimeout(messageTimeout);
+  const msg = document.getElementById('message');
+  msg.textContent = text;
+  messageTimeout = setTimeout(() => msg.textContent = '', 2000);
+}
+
+function clearMessage() {
+  document.getElementById('message').textContent = '';
+}
+
+function checkGameOver() {
+  if (score <= 0) {
+    showMessage('もう一度？');
+    score = 100;
+    updateScore();
+  }
+}
+
+document.getElementById('startBtn').addEventListener('click', startSpin);
+document.getElementById('stop1').addEventListener('click', () => stop(0));
+document.getElementById('stop2').addEventListener('click', () => stop(1));
+document.getElementById('stop3').addEventListener('click', () => stop(2));
+
+window.onload = () => {
+  for (let i = 0; i < 3; i++) {
+    drawReel(i);
+  }
+};
