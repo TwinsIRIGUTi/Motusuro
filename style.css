@@ -1,86 +1,99 @@
 body {
-  background-color: #222;
+  font-family: sans-serif;
+  background: #111;
   color: #fff;
-  font-family: 'Arial', sans-serif;
-  text-align: center;
   margin: 0;
   padding: 0;
+  text-align: center;
 }
 
-.container {
-  padding: 20px;
-}
-
-.slot-frame {
-  border: 4px solid #444;
-  border-radius: 10px;
-  padding: 20px;
-  background-color: #111;
-  display: inline-block;
+#game-container {
+  max-width: 480px;
+  margin: auto;
+  padding: 10px;
 }
 
 .reel-container {
   display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin-bottom: 10px;
+  justify-content: space-between;
+  margin: 10px 0;
 }
 
 .reel {
-  width: 80px;
-  height: 240px;
-  background-color: #fff;
-  border: 2px solid #000;
+  width: 30%;
+  height: 480px;
   overflow: hidden;
+  background: #000;
   display: flex;
   flex-direction: column;
   justify-content: center;
-  position: relative;
 }
 
 .reel img {
   width: 100%;
-  height: 80px;
+  height: 160px;
   object-fit: contain;
   background-color: white;
+  margin: 5px 0;
 }
 
-.line-indicator {
-  width: 100%;
-  height: 4px;
-  background-color: lime;
-  margin: 5px 0 15px 0;
+#lcd-display {
+  margin: 10px 0;
+  font-size: 20px;
+  min-height: 30px;
 }
 
-button {
-  margin: 10px 5px;
-  padding: 10px 20px;
-  font-size: 16px;
-}
-
-.stopBtn {
-  border-radius: 50%;
-  background-color: red;
-  color: white;
-  border: none;
-  width: 60px;
-  height: 60px;
-}
-
-#startBtn {
-  background-color: #aaa;
-  color: white;
-  font-weight: bold;
-}
-
-.score {
+.control-buttons {
   margin-top: 10px;
+}
+
+.lever {
+  padding: 10px 30px;
+  font-size: 18px;
+  background: linear-gradient(to bottom, #888, #444);
+  color: white;
+  border: 2px solid #222;
+  border-radius: 8px;
+}
+
+.stop-buttons {
+  display: flex;
+  justify-content: center;
+  margin-top: 10px;
+}
+
+.stop-set {
+  margin: 0 10px;
+  text-align: center;
+}
+
+.stop-button {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: red;
+  color: white;
+  font-size: 20px;
+  border: none;
+}
+
+.stop-label {
+  margin-top: 5px;
+  font-size: 14px;
+}
+
+#score-display {
+  margin-top: 15px;
   font-size: 18px;
 }
 
-.message {
-  font-size: 20px;
+#game-over {
+  margin-top: 20px;
+  font-size: 24px;
+  font-weight: bold;
   color: yellow;
-  height: 24px;
-  margin-bottom: 10px;
+}
+
+.hidden {
+  display: none;
 }
