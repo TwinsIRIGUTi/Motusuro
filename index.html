@@ -1,28 +1,43 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>モツスロ</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css" />
 </head>
-<body id="game-body">
-  <h1>モツスロ</h1>
-  <div id="slot-frame">
+<body>
+  <div id="game-container">
+    <div id="lcd-display"></div>
+
     <div class="reel-container">
       <div class="reel" id="reel-left"></div>
       <div class="reel" id="reel-center"></div>
       <div class="reel" id="reel-right"></div>
     </div>
-    <div id="lcd-display" class="lcd"></div>
-    <button id="start-button" class="lever">レバー</button>
-    <div class="buttons">
-      <button id="stop-1" class="stop-button">停止1</button>
-      <button id="stop-2" class="stop-button">停止2</button>
-      <button id="stop-3" class="stop-button">停止3</button>
+
+    <div class="control-buttons">
+      <button id="start-button" class="lever">レバー</button>
+      <div class="stop-buttons">
+        <div class="stop-set">
+          <button id="stop-1" class="stop-button">●</button>
+          <div class="stop-label">第1</div>
+        </div>
+        <div class="stop-set">
+          <button id="stop-2" class="stop-button">●</button>
+          <div class="stop-label">第2</div>
+        </div>
+        <div class="stop-set">
+          <button id="stop-3" class="stop-button">●</button>
+          <div class="stop-label">第3</div>
+        </div>
+      </div>
     </div>
+
     <div id="score-display">ポイント: 100</div>
+    <div id="game-over" class="hidden">ゲームオーバー！<br />もう一度？</div>
   </div>
+
   <script src="script.js"></script>
 </body>
 </html>
