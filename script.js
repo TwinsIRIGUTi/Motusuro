@@ -1,3 +1,9 @@
+const reels = [
+  ["モツオ", "2枚役", "twins", "10枚役", "リプレイ", "15枚役", "赤7", "赤7", "赤7", "10枚役", "リプレイ", "twins", "2枚役", "赤7", "10枚役", "リプレイ", "15枚役"],
+  ["モツオ", "リプレイ", "10枚役", "2枚役", "赤7", "リプレイ", "10枚役", "2枚役", "リプレイ", "twins", "赤7", "10枚役", "15枚役", "リプレイ", "モツオ", "2枚役", "10枚役"],
+  ["モツオ", "10枚役", "リプレイ", "twins", "10枚役", "リプレイ", "15枚役", "赤7", "10枚役", "twins", "リプレイ", "赤7", "10枚役", "15枚役", "リプレイ", "twins", "2枚役"]
+];
+
 const symbolImages = {
   "モツオ": "images/motuo.png",
   "赤7": "images/aka7.png",
@@ -8,23 +14,18 @@ const symbolImages = {
   "15枚役": "images/umewari.png"
 };
 
-const reels = [
-  ["モツオ", "2枚役", "twins", "10枚役", "リプレイ", "15枚役", "赤7", "赤7", "赤7", "10枚役", "リプレイ", "twins", "2枚役", "赤7", "10枚役", "リプレイ", "15枚役"],
-  ["モツオ", "リプレイ", "10枚役", "2枚役", "赤7", "リプレイ", "10枚役", "2枚役", "リプレイ", "twins", "赤7", "10枚役", "15枚役", "リプレイ", "モツオ", "2枚役", "10枚役"],
-  ["モツオ", "10枚役", "リプレイ", "twins", "10枚役", "リプレイ", "15枚役", "赤7", "10枚役", "twins", "リプレイ", "赤7", "10枚役", "15枚役", "リプレイ", "twins", "2枚役"]
-];
-
+let position = [0, 0, 0];
+let spinIntervals = [null, null, null];
 let isSpinning = false;
 let stopped = [false, false, false];
 let results = ["", "", ""];
-let position = [0, 0, 0];
-let spinIntervals = [null, null, null];
 let score = 100;
 let bonusState = null;
 let sounds = {};
 
 window.onload = () => {
-  ["lever", "stop", "hit", "replay", "payout", "big", "reg", "miss", "gameover"].forEach(id => {
+  // 効果音の読み込み
+  ["lever","stop","hit","replay","payout","big","reg","miss","gameover"].forEach(id => {
     sounds[id] = document.getElementById(`se-${id}`);
   });
 
@@ -39,9 +40,9 @@ function drawReels() {
   for (let i = 0; i < 3; i++) {
     const reel = document.getElementById(`reel${i + 1}`);
     reel.innerHTML = `
-      <img src="${symbolImages[reels[i][(position[i] + 0) % reels[i].length]]}" />
-      <img src="${symbolImages[reels[i][(position[i] + 1) % reels[i].length]]}" />
-      <img src="${symbolImages[reels[i][(position[i] + 2) % reels[i].length]]}" />
+      <img src="${symbolImages[reels[i][(position[i] + 0) % reels[i].length]]}">
+      <img src="${symbolImages[reels[i][(position[i] + 1) % reels[i].length]]}">
+      <img src="${symbolImages[reels[i][(position[i] + 2) % reels[i].length]]}">
     `;
   }
 }
@@ -52,6 +53,7 @@ function startSpin() {
   stopped = [false, false, false];
   results = ["", "", ""];
   bonusState = bonusState || getBonus();
+
   sounds.lever.play();
   document.getElementById("message").textContent = "";
 
@@ -59,17 +61,16 @@ function startSpin() {
     spinIntervals[i] = setInterval(() => {
       position[i] = (position[i] + 1) % reels[i].length;
       drawReels();
-    }, 50 + i * 30); // 少しずつズレて回転
+    }, 100);
   }
 }
 
 function stopReel(index) {
   if (!isSpinning || stopped[index]) return;
-  sounds.stop.play();
 
+  sounds.stop.play();
   clearInterval(spinIntervals[index]);
 
-  // ランダム停止位置
   position[index] = Math.floor(Math.random() * reels[index].length);
   results[index] = reels[index][position[index]];
   drawReels();
@@ -83,11 +84,11 @@ function stopReel(index) {
 
 function evaluate() {
   const lines = [
-    [0, 0, 0],
-    [1, 1, 1],
-    [2, 2, 2],
-    [0, 1, 2],
-    [2, 1, 0]
+    [0, 0, 0], // 上段
+    [1, 1, 1], // 中段
+    [2, 2, 2], // 下段
+    [0, 1, 2], // 右下がり
+    [2, 1, 0]  // 左下がり
   ];
 
   const getSymbol = (i, offset) => reels[i][(position[i] + offset) % reels[i].length];
@@ -104,13 +105,11 @@ function evaluate() {
     }
   }
 
-  // 特殊2枚役処理（押し順不問で左に1つだけでも成立）
+  // 2枚役チェック（左リールに表示、押し順問わず）
   if (!matched && reels[0][position[0]] === "2枚役") {
-    const row = position[0] % 3;
-    const add = (row === 1) ? 2 : 4;
-    score += add;
+    score += 2;
     sounds.payout.play();
-    document.getElementById("message").textContent = `2枚役！ +${add}`;
+    document.getElementById("message").textContent = "2枚役！";
     matched = true;
   }
 
@@ -136,7 +135,7 @@ function handleMatch(symbol) {
     case "リプレイ":
       score += 3;
       sounds.replay.play();
-      document.getElementById("message").textContent = "再遊戯！";
+      document.getElementById("message").textContent = "再遊戯";
       break;
     case "10枚役":
       score += 10;
@@ -161,14 +160,12 @@ function handleMatch(symbol) {
       document.getElementById("message").textContent = "レギュラーボーナス！";
       bonusState = null;
       break;
-    default:
-      break;
   }
 }
 
 function getBonus() {
   const r = Math.random();
   if (r < 1 / 48) return "big";
-  if (r < 1 / 32 + 1 / 48) return "reg";
+  if (r < 1 / 32) return "reg";
   return null;
 }
