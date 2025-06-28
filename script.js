@@ -51,12 +51,14 @@ function startSpin() {
   stopped = [false, false, false];
   results = ["", "", ""];
   bonusState = bonusState || getBonus();
+  sounds.lever.currentTime = 0;
   sounds.lever.play();
   document.getElementById("message").textContent = "";
 }
 
 function stopReel(index) {
   if (!isSpinning || stopped[index]) return;
+  sounds.stop.currentTime = 0;
   sounds.stop.play();
   position[index] = Math.floor(Math.random() * reels[index].length);
   results[index] = reels[index][position[index]];
@@ -71,49 +73,59 @@ function stopReel(index) {
 
 function evaluate() {
   const lines = [
-    [0, 0, 0],
-    [1, 1, 1],
-    [2, 2, 2],
-    [0, 1, 2],
-    [2, 1, 0]
+    [0, 0, 0], // 上段
+    [1, 1, 1], // 中段
+    [2, 2, 2], // 下段
+    [0, 1, 2], // 右下がり
+    [2, 1, 0]  // 左下がり
   ];
 
   const getSymbol = (i, offset) => reels[i][(position[i] + offset) % reels[i].length];
 
-  let matched = false;
+  const priorities = {
+    "モツオ": 7,
+    "赤7": 7,
+    "twins": 6,
+    "15枚役": 5,
+    "10枚役": 4,
+    "4枚役": 3,
+    "2枚役": 2,
+    "リプレイ": 1
+  };
+
+  let bestSymbol = "";
+  let bestPriority = 0;
 
   for (let line of lines) {
     const s1 = getSymbol(0, line[0]);
     const s2 = getSymbol(1, line[1]);
     const s3 = getSymbol(2, line[2]);
 
-    if (s1 === s2 && s2 === s3) {
-      matched = true;
-      handleMatch(s1);
+    if (s1 === s2 && s2 === s3 && priorities[s1] > bestPriority) {
+      bestSymbol = s1;
+      bestPriority = priorities[s1];
     }
   }
 
-  // 特殊処理：2枚役の左リールの位置だけで判定
-  if (!matched && results[0] === "2枚役") {
-    const yOffset = position[0] % reels[0].length;
-    const yIndex = [0, 1, 2].find(i => reels[0][(position[0] + i) % reels[0].length] === "2枚役");
-    if (yIndex === 1) {
-      score += 2;
-    } else {
-      score += 4;
-    }
-    sounds.payout.play();
-    document.getElementById("message").textContent = "2枚役！";
-    matched = true;
+  // 2枚役 特殊処理：左リールのみ、押し順不問
+  if (bestPriority === 0 && results[0] === "2枚役") {
+    const pos = position[0] % reels[0].length;
+    const offset = (pos === 0 || pos === 2) ? 4 : 2;
+    bestSymbol = offset === 4 ? "4枚役" : "2枚役";
+    bestPriority = priorities[bestSymbol];
   }
 
-  if (!matched && !bonusState) {
+  if (bestSymbol) {
+    handleMatch(bestSymbol);
+  } else {
     score -= 3;
+    sounds.miss.currentTime = 0;
     sounds.miss.play();
     document.getElementById("message").textContent = "ハズレ…";
   }
 
   if (score <= 0) {
+    sounds.gameover.currentTime = 0;
     sounds.gameover.play();
     setTimeout(() => {
       alert("ゲームオーバー\nもう一度？");
@@ -128,28 +140,45 @@ function handleMatch(symbol) {
   switch (symbol) {
     case "リプレイ":
       score += 3;
+      sounds.replay.currentTime = 0;
       sounds.replay.play();
       document.getElementById("message").textContent = "再遊戯";
       break;
     case "10枚役":
       score += 10;
+      sounds.payout.currentTime = 0;
       sounds.payout.play();
       document.getElementById("message").textContent = "10枚役！";
       break;
     case "15枚役":
       score += 15;
+      sounds.payout.currentTime = 0;
       sounds.payout.play();
       document.getElementById("message").textContent = "15枚役！";
+      break;
+    case "2枚役":
+      score += 2;
+      sounds.payout.currentTime = 0;
+      sounds.payout.play();
+      document.getElementById("message").textContent = "2枚役！";
+      break;
+    case "4枚役":
+      score += 4;
+      sounds.payout.currentTime = 0;
+      sounds.payout.play();
+      document.getElementById("message").textContent = "角2枚役！";
       break;
     case "モツオ":
     case "赤7":
       score += 200;
+      sounds.big.currentTime = 0;
       sounds.big.play();
       document.getElementById("message").textContent = "ビッグボーナス！";
       bonusState = null;
       break;
     case "twins":
       score += 100;
+      sounds.reg.currentTime = 0;
       sounds.reg.play();
       document.getElementById("message").textContent = "レギュラーボーナス！";
       bonusState = null;
