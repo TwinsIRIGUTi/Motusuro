@@ -1,5 +1,5 @@
 const symbols = {
-  "replay": "images/replay.png",
+  "リプレイ": "images/replay.png",
   "2枚役": "images/pickle.png",
   "10枚役": "images/yakitori.png",
   "15枚役": "images/umesyu.png",
@@ -17,14 +17,15 @@ const reels = [
 
 let isSpinning = false;
 let stopped = [false, false, false];
+let positions = [0, 0, 0];
 let results = ["", "", ""];
-let position = [0, 0, 0];
+let intervals = [null, null, null];
 let score = 100;
 let bonusState = null;
 let sounds = {};
 
 window.onload = () => {
-  ["lever","stop","hit","replay","payout","big","reg","miss","gameover"].forEach(id => {
+  ["lever", "stop", "hit", "replay", "payout", "big", "reg", "miss", "gameover"].forEach(id => {
     sounds[id] = document.getElementById(`se-${id}`);
   });
 
@@ -39,9 +40,9 @@ function drawReels() {
   for (let i = 0; i < 3; i++) {
     const reel = document.getElementById(`reel${i + 1}`);
     reel.innerHTML = `
-      <img src="${symbols[reels[i][(position[i] + 0) % reels[i].length]]}">
-      <img src="${symbols[reels[i][(position[i] + 1) % reels[i].length]]}">
-      <img src="${symbols[reels[i][(position[i] + 2) % reels[i].length]]}">
+      <img src="${symbols[reels[i][(positions[i]) % reels[i].length]] || ""}">
+      <img src="${symbols[reels[i][(positions[i] + 1) % reels[i].length]] || ""}">
+      <img src="${symbols[reels[i][(positions[i] + 2) % reels[i].length]] || ""}">
     `;
   }
 }
@@ -50,21 +51,31 @@ function startSpin() {
   if (isSpinning) return;
   isSpinning = true;
   stopped = [false, false, false];
-  results = ["", "", ""];
   bonusState = bonusState || getBonus();
-  sounds.lever.play();
+  results = ["", "", ""];
+
   document.getElementById("message").textContent = "";
+  sounds.lever.play();
+
+  for (let i = 0; i < 3; i++) {
+    intervals[i] = setInterval(() => {
+      positions[i] = (positions[i] + 1) % reels[i].length;
+      drawReels();
+    }, 100);
+  }
 }
 
 function stopReel(index) {
   if (!isSpinning || stopped[index]) return;
-  sounds.stop.play();
-  position[index] = Math.floor(Math.random() * reels[index].length);
-  results[index] = reels[index][position[index]];
+
+  clearInterval(intervals[index]);
+  positions[index] = Math.floor(Math.random() * reels[index].length);
+  results[index] = reels[index][positions[index]];
   drawReels();
+  sounds.stop.play();
   stopped[index] = true;
 
-  if (stopped.every(Boolean)) {
+  if (stopped.every(v => v)) {
     isSpinning = false;
     evaluate();
   }
@@ -72,34 +83,35 @@ function stopReel(index) {
 
 function evaluate() {
   const lines = [
-    [0, 0, 0], // 上段
-    [1, 1, 1], // 中段
-    [2, 2, 2], // 下段
-    [0, 1, 2], // 右下がり
-    [2, 1, 0]  // 左下がり
+    [0, 0, 0], // top
+    [1, 1, 1], // middle
+    [2, 2, 2], // bottom
+    [0, 1, 2], // slash /
+    [2, 1, 0]  // backslash \
   ];
 
-  const getSymbol = (i, offset) => reels[i][(position[i] + offset) % reels[i].length];
+  let hit = false;
 
-  let matched = false;
   for (let line of lines) {
-    const s1 = getSymbol(0, line[0]);
-    const s2 = getSymbol(1, line[1]);
-    const s3 = getSymbol(2, line[2]);
+    const s1 = reels[0][(positions[0] + line[0]) % reels[0].length];
+    const s2 = reels[1][(positions[1] + line[1]) % reels[1].length];
+    const s3 = reels[2][(positions[2] + line[2]) % reels[2].length];
 
     if (s1 === s2 && s2 === s3) {
-      matched = true;
       handleMatch(s1);
+      hit = true;
     }
   }
 
-  if (!matched && results[0] === "2枚役") {
-    score += (lineType(position[0]) === "middle" ? 2 : 4);
+  // 特例: 2枚役は左リールのみで出現時に加点（押し順不問）
+  if (!hit && results[0] === "2枚役") {
+    score += 2;
     sounds.payout.play();
     document.getElementById("message").textContent = "2枚役！";
+    hit = true;
   }
 
-  if (!matched && !bonusState) {
+  if (!hit) {
     score -= 3;
     sounds.miss.play();
     document.getElementById("message").textContent = "ハズレ…";
@@ -110,7 +122,7 @@ function evaluate() {
     setTimeout(() => {
       alert("ゲームオーバー\nもう一度？");
       location.reload();
-    }, 500);
+    }, 800);
   }
 
   document.getElementById("score").textContent = `ポイント：${score}`;
@@ -121,7 +133,7 @@ function handleMatch(symbol) {
     case "リプレイ":
       score += 3;
       sounds.replay.play();
-      document.getElementById("message").textContent = "再遊戯";
+      document.getElementById("message").textContent = "リプレイ！";
       break;
     case "10枚役":
       score += 10;
@@ -156,9 +168,4 @@ function getBonus() {
   if (r < 1 / 48) return "big";
   if (r < 1 / 48 + 1 / 32) return "reg";
   return null;
-}
-
-function lineType(pos) {
-  if (pos === 0 || pos === 2) return "outer";
-  return "middle";
 }
