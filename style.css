@@ -1,103 +1,61 @@
 body {
-  font-family: sans-serif;
   background: #111;
-  color: #fff;
+  color: white;
+  font-family: sans-serif;
   text-align: center;
   margin: 0;
   padding: 0;
 }
 
-#game-container {
-  max-width: 480px;
-  margin: auto;
-  padding: 10px;
-  position: relative;
-}
-
-#slot-frame {
-  background-image: url("images/slot_machine_frame.png");
-  background-size: cover;
-  background-position: center;
+.game-container {
   padding: 20px;
 }
 
-.reel-container {
+.slot-container {
   display: flex;
-  justify-content: space-between;
-  gap: 10px;
-  height: 500px;
+  justify-content: center;
   margin-bottom: 10px;
 }
 
 .reel {
-  width: 30%;
-  background: #fff;
-  overflow: hidden;
+  width: 100px;
+  height: 180px;
+  margin: 0 5px;
+  border: 2px solid white;
+  background: black;
   display: flex;
   flex-direction: column;
   justify-content: center;
-}
-
-.reel img {
-  display: block;
-  width: 100%;
-  height: 160px;
-  object-fit: contain;
-  background-color: white;
-  margin: 5px 0;
-}
-
-.control-buttons {
-  margin-top: 10px;
-}
-
-.lever-container {
-  margin-bottom: 10px;
-}
-
-.lever {
-  padding: 15px 30px;
-  font-size: 20px;
-  background-color: #444;
-  color: white;
-  border: 3px solid #999;
-  border-radius: 8px;
-  box-shadow: 2px 2px 5px #000;
-}
-
-.stop-buttons {
-  display: flex;
-  justify-content: space-around;
-}
-
-.stop-group {
-  display: flex;
-  flex-direction: column;
   align-items: center;
 }
 
-.stop-button {
-  background-color: red;
-  border: none;
+.reel img {
+  width: 80px;
+  height: 60px;
+}
+
+.buttons {
+  margin: 10px;
+}
+
+.stop-button,
+#lever {
+  margin: 5px;
+  padding: 10px 20px;
+  font-size: 16px;
+  background: red;
   color: white;
-  font-size: 24px;
-  border-radius: 50%;
-  width: 50px;
-  height: 50px;
+  border: none;
+  border-radius: 5px;
 }
 
-.stop-label {
-  margin-top: 5px;
-  font-size: 14px;
-}
-
-#lcd-display {
-  margin: 10px 0;
+.message {
+  margin: 10px;
   font-size: 20px;
-  height: 30px;
+  height: 24px;
 }
 
-#score-display {
+#score {
   margin-top: 10px;
   font-size: 18px;
 }
