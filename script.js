@@ -22,7 +22,6 @@ let score = 100;
 let sounds = {};
 
 window.onload = () => {
-  // 効果音の読み込み
   ["lever", "stop", "hit", "replay", "payout", "big", "reg", "miss", "gameover"].forEach(id => {
     sounds[id] = document.getElementById(`se-${id}`);
   });
@@ -50,6 +49,8 @@ function startSpin() {
   isSpinning = true;
   stopped = [false, false, false];
   results = ["", "", ""];
+  positions = positions.map(pos => (pos + Math.floor(Math.random() * reels[0].length)) % reels[0].length);
+  drawReels();
   sounds.lever.play();
   document.getElementById("message").textContent = "";
 }
@@ -70,11 +71,11 @@ function stopReel(index) {
 
 function evaluate() {
   const lines = [
-    [0, 0, 0], // 上段
-    [1, 1, 1], // 中段
-    [2, 2, 2], // 下段
-    [0, 1, 2], // 右下がり
-    [2, 1, 0]  // 左下がり
+    [0, 0, 0],
+    [1, 1, 1],
+    [2, 2, 2],
+    [0, 1, 2],
+    [2, 1, 0]
   ];
 
   let matched = false;
@@ -91,16 +92,16 @@ function evaluate() {
     }
   }
 
-  // 2枚役（左リールのみ）特殊条件
-  if (!matched && results[0] === "2枚役") {
-    const pos = positions[0] % reels[0].length;
-    if (pos === 0 || pos === 2) {
-      score += 4;
-    } else {
-      score += 2;
-    }
+  // ★ 2枚役 左リール出現だけで成立（押し順関係なし・ライン関係なし）
+  const leftTop    = reels[0][(positions[0]) % reels[0].length];
+  const leftMiddle = reels[0][(positions[0] + 1) % reels[0].length];
+  const leftBottom = reels[0][(positions[0] + 2) % reels[0].length];
+  if (!matched && [leftTop, leftMiddle, leftBottom].includes("2枚役")) {
+    const index = [leftTop, leftMiddle, leftBottom].indexOf("2枚役");
+    const points = index === 1 ? 2 : 4;
+    score += points;
     sounds.payout.play();
-    document.getElementById("message").textContent = "2枚役！";
+    document.getElementById("message").textContent = `2枚役！+${points}点`;
     matched = true;
   }
 
