@@ -14,7 +14,7 @@ body {
 .slot-container {
   display: flex;
   justify-content: center;
-  margin-bottom: 10px;
+  margin: 20px 0;
 }
 
 .reel {
@@ -32,6 +32,8 @@ body {
 .reel img {
   width: 80px;
   height: 60px;
+  object-fit: contain;
+  margin: 1px 0;
 }
 
 .buttons {
@@ -47,6 +49,12 @@ body {
   color: white;
   border: none;
   border-radius: 5px;
+  cursor: pointer;
+}
+
+.stop-button:hover,
+#lever:hover {
+  background: darkred;
 }
 
 .message {
