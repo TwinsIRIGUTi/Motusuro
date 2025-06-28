@@ -14,18 +14,16 @@ const symbolImages = {
   "15枚役": "images/umewari.png"
 };
 
-let position = [0, 0, 0];
-let spinIntervals = [null, null, null];
 let isSpinning = false;
 let stopped = [false, false, false];
 let results = ["", "", ""];
+let position = [0, 0, 0];
 let score = 100;
 let bonusState = null;
 let sounds = {};
 
 window.onload = () => {
-  // 効果音の読み込み
-  ["lever","stop","hit","replay","payout","big","reg","miss","gameover"].forEach(id => {
+  ["lever", "stop", "hit", "replay", "payout", "big", "reg", "miss", "gameover"].forEach(id => {
     sounds[id] = document.getElementById(`se-${id}`);
   });
 
@@ -53,24 +51,13 @@ function startSpin() {
   stopped = [false, false, false];
   results = ["", "", ""];
   bonusState = bonusState || getBonus();
-
   sounds.lever.play();
   document.getElementById("message").textContent = "";
-
-  for (let i = 0; i < 3; i++) {
-    spinIntervals[i] = setInterval(() => {
-      position[i] = (position[i] + 1) % reels[i].length;
-      drawReels();
-    }, 100);
-  }
 }
 
 function stopReel(index) {
   if (!isSpinning || stopped[index]) return;
-
   sounds.stop.play();
-  clearInterval(spinIntervals[index]);
-
   position[index] = Math.floor(Math.random() * reels[index].length);
   results[index] = reels[index][position[index]];
   drawReels();
@@ -84,16 +71,17 @@ function stopReel(index) {
 
 function evaluate() {
   const lines = [
-    [0, 0, 0], // 上段
-    [1, 1, 1], // 中段
-    [2, 2, 2], // 下段
-    [0, 1, 2], // 右下がり
-    [2, 1, 0]  // 左下がり
+    [0, 0, 0],
+    [1, 1, 1],
+    [2, 2, 2],
+    [0, 1, 2],
+    [2, 1, 0]
   ];
 
   const getSymbol = (i, offset) => reels[i][(position[i] + offset) % reels[i].length];
 
   let matched = false;
+
   for (let line of lines) {
     const s1 = getSymbol(0, line[0]);
     const s2 = getSymbol(1, line[1]);
@@ -105,9 +93,15 @@ function evaluate() {
     }
   }
 
-  // 2枚役チェック（左リールに表示、押し順問わず）
-  if (!matched && reels[0][position[0]] === "2枚役") {
-    score += 2;
+  // 特殊処理：2枚役の左リールの位置だけで判定
+  if (!matched && results[0] === "2枚役") {
+    const yOffset = position[0] % reels[0].length;
+    const yIndex = [0, 1, 2].find(i => reels[0][(position[0] + i) % reels[0].length] === "2枚役");
+    if (yIndex === 1) {
+      score += 2;
+    } else {
+      score += 4;
+    }
     sounds.payout.play();
     document.getElementById("message").textContent = "2枚役！";
     matched = true;
@@ -160,12 +154,14 @@ function handleMatch(symbol) {
       document.getElementById("message").textContent = "レギュラーボーナス！";
       bonusState = null;
       break;
+    default:
+      break;
   }
 }
 
 function getBonus() {
   const r = Math.random();
   if (r < 1 / 48) return "big";
-  if (r < 1 / 32) return "reg";
+  if (r < 1 / 48 + 1 / 32) return "reg";
   return null;
 }
