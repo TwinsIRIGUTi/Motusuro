@@ -2,34 +2,44 @@ body {
   font-family: sans-serif;
   background: #111;
   color: #fff;
+  text-align: center;
   margin: 0;
   padding: 0;
-  text-align: center;
 }
 
 #game-container {
   max-width: 480px;
   margin: auto;
   padding: 10px;
+  position: relative;
+}
+
+#slot-frame {
+  background-image: url("images/slot_machine_frame.png");
+  background-size: cover;
+  background-position: center;
+  padding: 20px;
 }
 
 .reel-container {
   display: flex;
   justify-content: space-between;
-  margin: 10px 0;
+  gap: 10px;
+  height: 500px;
+  margin-bottom: 10px;
 }
 
 .reel {
   width: 30%;
-  height: 480px;
+  background: #fff;
   overflow: hidden;
-  background: #000;
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
 
 .reel img {
+  display: block;
   width: 100%;
   height: 160px;
   object-fit: contain;
@@ -37,44 +47,43 @@ body {
   margin: 5px 0;
 }
 
-#lcd-display {
-  margin: 10px 0;
-  font-size: 20px;
-  min-height: 30px;
-}
-
 .control-buttons {
   margin-top: 10px;
 }
 
+.lever-container {
+  margin-bottom: 10px;
+}
+
 .lever {
-  padding: 10px 30px;
-  font-size: 18px;
-  background: linear-gradient(to bottom, #888, #444);
+  padding: 15px 30px;
+  font-size: 20px;
+  background-color: #444;
   color: white;
-  border: 2px solid #222;
+  border: 3px solid #999;
   border-radius: 8px;
+  box-shadow: 2px 2px 5px #000;
 }
 
 .stop-buttons {
   display: flex;
-  justify-content: center;
-  margin-top: 10px;
+  justify-content: space-around;
 }
 
-.stop-set {
-  margin: 0 10px;
-  text-align: center;
+.stop-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .stop-button {
+  background-color: red;
+  border: none;
+  color: white;
+  font-size: 24px;
+  border-radius: 50%;
   width: 50px;
   height: 50px;
-  border-radius: 50%;
-  background: red;
-  color: white;
-  font-size: 20px;
-  border: none;
 }
 
 .stop-label {
@@ -82,18 +91,13 @@ body {
   font-size: 14px;
 }
 
+#lcd-display {
+  margin: 10px 0;
+  font-size: 20px;
+  height: 30px;
+}
+
 #score-display {
-  margin-top: 15px;
+  margin-top: 10px;
   font-size: 18px;
-}
-
-#game-over {
-  margin-top: 20px;
-  font-size: 24px;
-  font-weight: bold;
-  color: yellow;
-}
-
-.hidden {
-  display: none;
 }
