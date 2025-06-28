@@ -27,13 +27,11 @@ body {
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  overflow: hidden;
 }
 
 .reel img {
   width: 80px;
   height: 60px;
-  object-fit: contain;
 }
 
 .buttons {
@@ -49,6 +47,7 @@ body {
   color: white;
   border: none;
   border-radius: 5px;
+  cursor: pointer;
 }
 
 .message {
