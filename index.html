@@ -2,44 +2,38 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>モツスロ</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
-  <div id="game-container">
-    <div id="lcd-display"></div>
-
-    <div id="slot-frame">
-      <div class="reel-container">
-        <div class="reel" id="reel-left"></div>
-        <div class="reel" id="reel-center"></div>
-        <div class="reel" id="reel-right"></div>
-      </div>
+  <div class="game-container">
+    <h1>モツスロ</h1>
+    <div id="slot" class="slot-container">
+      <div class="reel" id="reel1"></div>
+      <div class="reel" id="reel2"></div>
+      <div class="reel" id="reel3"></div>
     </div>
-
-    <div class="control-buttons">
-      <div class="lever-container">
-        <button id="start-button" class="lever">レバー</button>
-      </div>
-      <div class="stop-buttons">
-        <div class="stop-group">
-          <button id="stop-1" class="stop-button">●</button>
-          <div class="stop-label">第1</div>
-        </div>
-        <div class="stop-group">
-          <button id="stop-2" class="stop-button">●</button>
-          <div class="stop-label">第2</div>
-        </div>
-        <div class="stop-group">
-          <button id="stop-3" class="stop-button">●</button>
-          <div class="stop-label">第3</div>
-        </div>
-      </div>
+    <div id="message" class="message"></div>
+    <button id="lever">レバー</button>
+    <div class="buttons">
+      <button id="stop1" class="stop-button">停止1</button>
+      <button id="stop2" class="stop-button">停止2</button>
+      <button id="stop3" class="stop-button">停止3</button>
     </div>
-
-    <div id="score-display">ポイント: 100</div>
+    <div id="score">ポイント：100</div>
   </div>
+
+  <!-- 効果音 -->
+  <audio id="se-lever" src="sounds/lever.mp3"></audio>
+  <audio id="se-stop" src="sounds/stop.mp3"></audio>
+  <audio id="se-hit" src="sounds/hit.mp3"></audio>
+  <audio id="se-replay" src="sounds/replay.mp3"></audio>
+  <audio id="se-payout" src="sounds/payout.mp3"></audio>
+  <audio id="se-big" src="sounds/big_bonus.mp3"></audio>
+  <audio id="se-reg" src="sounds/reg_bonus.mp3"></audio>
+  <audio id="se-miss" src="sounds/miss.mp3"></audio>
+  <audio id="se-gameover" src="sounds/gameover.mp3"></audio>
 
   <script src="script.js"></script>
 </body>
