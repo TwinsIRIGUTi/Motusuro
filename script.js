@@ -35,8 +35,20 @@ let bonusState = null;
 let sounds = {};
 
 window.onload = () => {
-  ["lever", "stop", "hit", "replay", "payout", "big", "reg", "miss", "gameover"].forEach(id => {
-    sounds[id] = document.getElementById(`se-${id}`);
+  const soundIds = ["lever", "stop", "hit", "replay", "payout", "big", "reg", "miss", "gameover"];
+  soundIds.forEach(id => {
+    const audio = document.getElementById(`se-${id}`);
+    sounds[id] = audio;
+
+    // 再生遅延を防ぐための無音プリロード再生
+    audio.volume = 0;
+    audio.play().then(() => {
+      audio.pause();
+      audio.currentTime = 0;
+      audio.volume = 1;
+    }).catch(() => {
+      // モバイルブラウザなどでの再生拒否は無視
+    });
   });
 
   drawReels();
@@ -95,11 +107,11 @@ function stopReel(index) {
 
 function evaluateResult() {
   const lines = [
-    [0, 0, 0],
-    [1, 1, 1],
-    [2, 2, 2],
-    [0, 1, 2],
-    [2, 1, 0]
+    [0, 0, 0], // 上段
+    [1, 1, 1], // 中段
+    [2, 2, 2], // 下段
+    [0, 1, 2], // 右下がり
+    [2, 1, 0]  // 左下がり
   ];
 
   const getSymbol = (i, offset) =>
@@ -125,37 +137,41 @@ function evaluateResult() {
     }
   }
 
-  const pos = positions[0];
-  const two = reels[0][(pos + 0) % reels[0].length];
-  const twoAbove = reels[0][(pos + 1) % reels[0].length];
-  const twoBelow = reels[0][(pos + 2) % reels[0].length];
-  if (two === "2枚役" || twoAbove === "2枚役" || twoBelow === "2枚役") {
+  // 2枚役特殊処理（左リールにどこでも出たら成立）
+  const leftPos = positions[0];
+  const s0 = reels[0][(leftPos + 0) % reels[0].length];
+  const s1 = reels[0][(leftPos + 1) % reels[0].length];
+  const s2 = reels[0][(leftPos + 2) % reels[0].length];
+  if ([s0, s1, s2].includes("2枚役")) {
     score += 4;
     sounds.payout.currentTime = 0;
     sounds.payout.play();
     document.getElementById("message").textContent = "2枚役！";
   } else {
+    // ハズレ処理
     score -= 3;
     sounds.miss.currentTime = 0;
     sounds.miss.play();
     document.getElementById("message").textContent = "ハズレ…";
   }
 
+  document.getElementById("score").textContent = `ポイント：${score}`;
+
   if (score >= 1000) {
-    sounds.hit.play();
+    sounds.big.currentTime = 0;
+    sounds.big.play();
     setTimeout(() => {
-      alert("クリア！\nもう一度？");
+      alert("ゲームクリア！\nもう一度？");
       location.reload();
     }, 500);
   } else if (score <= 0) {
+    sounds.gameover.currentTime = 0;
     sounds.gameover.play();
     setTimeout(() => {
       alert("ゲームオーバー\nもう一度？");
       location.reload();
     }, 500);
   }
-
-  document.getElementById("score").textContent = `ポイント：${score}`;
 }
 
 function handleMatch(symbol) {
