@@ -9,17 +9,12 @@ const symbolImages = {
 };
 
 const reels = [
-  // 第1リール（左）
   ["モツオ", "2枚役", "twins", "10枚役", "リプレイ", "15枚役",
    "赤7", "赤7", "赤7", "10枚役", "リプレイ", "twins",
    "モツオ", "赤7", "10枚役", "リプレイ", "15枚役"],
-
-  // 第2リール（中）
   ["モツオ", "リプレイ", "10枚役", "2枚役", "赤7", "リプレイ",
    "10枚役", "モツオ", "リプレイ", "twins", "赤7", "10枚役",
    "15枚役", "リプレイ", "モツオ", "2枚役", "10枚役"],
-
-  // 第3リール（右）
   ["モツオ", "10枚役", "リプレイ", "twins", "10枚役", "リプレイ",
    "15枚役", "赤7", "10枚役", "モツオ", "リプレイ", "赤7",
    "10枚役", "15枚役", "リプレイ", "twins", "2枚役"]
@@ -33,22 +28,11 @@ let isSpinning = false;
 let score = 100;
 let bonusState = null;
 let sounds = {};
+let startTime = null;  // ⏱ タイマー開始用
 
 window.onload = () => {
-  const soundIds = ["lever", "stop", "hit", "replay", "payout", "big", "reg", "miss", "gameover"];
-  soundIds.forEach(id => {
-    const audio = document.getElementById(`se-${id}`);
-    sounds[id] = audio;
-
-    // 再生遅延を防ぐための無音プリロード再生
-    audio.volume = 0;
-    audio.play().then(() => {
-      audio.pause();
-      audio.currentTime = 0;
-      audio.volume = 1;
-    }).catch(() => {
-      // モバイルブラウザなどでの再生拒否は無視
-    });
+  ["lever", "stop", "hit", "replay", "payout", "big", "reg", "miss", "gameover"].forEach(id => {
+    sounds[id] = document.getElementById(`se-${id}`);
   });
 
   drawReels();
@@ -76,6 +60,9 @@ function startSpin() {
   results = ["", "", ""];
   bonusState = bonusState || getBonus();
   document.getElementById("message").textContent = "";
+
+  if (!startTime) startTime = Date.now();  // ⏱ 開始時刻記録
+
   sounds.lever.currentTime = 0;
   sounds.lever.play();
 
@@ -107,11 +94,11 @@ function stopReel(index) {
 
 function evaluateResult() {
   const lines = [
-    [0, 0, 0], // 上段
-    [1, 1, 1], // 中段
-    [2, 2, 2], // 下段
-    [0, 1, 2], // 右下がり
-    [2, 1, 0]  // 左下がり
+    [0, 0, 0],
+    [1, 1, 1],
+    [2, 2, 2],
+    [0, 1, 2],
+    [2, 1, 0]
   ];
 
   const getSymbol = (i, offset) =>
@@ -133,22 +120,25 @@ function evaluateResult() {
   for (let symbol of priority) {
     if (matchedSymbols.includes(symbol)) {
       handleMatch(symbol);
+      checkGameEnd();
       return;
     }
   }
 
-  // 2枚役特殊処理（左リールにどこでも出たら成立）
-  const leftPos = positions[0];
-  const s0 = reels[0][(leftPos + 0) % reels[0].length];
-  const s1 = reels[0][(leftPos + 1) % reels[0].length];
-  const s2 = reels[0][(leftPos + 2) % reels[0].length];
-  if ([s0, s1, s2].includes("2枚役")) {
+  // 2枚役：左リールのどこかにあればOK
+  const pos = positions[0];
+  const check = [
+    reels[0][(pos + 0) % reels[0].length],
+    reels[0][(pos + 1) % reels[0].length],
+    reels[0][(pos + 2) % reels[0].length]
+  ];
+
+  if (check.includes("2枚役")) {
     score += 4;
     sounds.payout.currentTime = 0;
     sounds.payout.play();
     document.getElementById("message").textContent = "2枚役！";
   } else {
-    // ハズレ処理
     score -= 3;
     sounds.miss.currentTime = 0;
     sounds.miss.play();
@@ -156,22 +146,7 @@ function evaluateResult() {
   }
 
   document.getElementById("score").textContent = `ポイント：${score}`;
-
-  if (score >= 1000) {
-    sounds.big.currentTime = 0;
-    sounds.big.play();
-    setTimeout(() => {
-      alert("ゲームクリア！\nもう一度？");
-      location.reload();
-    }, 500);
-  } else if (score <= 0) {
-    sounds.gameover.currentTime = 0;
-    sounds.gameover.play();
-    setTimeout(() => {
-      alert("ゲームオーバー\nもう一度？");
-      location.reload();
-    }, 500);
-  }
+  checkGameEnd();
 }
 
 function handleMatch(symbol) {
@@ -217,6 +192,23 @@ function handleMatch(symbol) {
 
   document.getElementById("score").textContent = `ポイント：${score}`;
   bonusState = null;
+}
+
+function checkGameEnd() {
+  const elapsed = Math.floor((Date.now() - startTime) / 1000);
+
+  if (score >= 1000) {
+    setTimeout(() => {
+      alert(`🎉 ゲームクリア！\n経過時間：${elapsed}秒\nもう一度？`);
+      location.reload();
+    }, 500);
+  } else if (score <= 0) {
+    sounds.gameover.play();
+    setTimeout(() => {
+      alert(`ゲームオーバー\n経過時間：${elapsed}秒\nもう一度？`);
+      location.reload();
+    }, 500);
+  }
 }
 
 function getBonus() {
