@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>モツスロ</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
   <div class="game-container">
@@ -22,6 +22,10 @@
       <button id="stop3" class="stop-button">停止3</button>
     </div>
     <div id="score">ポイント：100</div>
+    <div id="clear" class="clear-message" style="display:none;">
+      🎉 クリア！もう一度？
+      <button onclick="location.reload()">リスタート</button>
+    </div>
   </div>
 
   <!-- 効果音 -->
