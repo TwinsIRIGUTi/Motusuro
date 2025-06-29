@@ -14,6 +14,7 @@ body {
 .slot-container {
   display: flex;
   justify-content: center;
+  align-items: center;
   margin-bottom: 10px;
 }
 
@@ -33,7 +34,7 @@ body {
 .reel img {
   width: 80px;
   height: 60px;
-  transition: transform 0.2s ease-in-out;
+  object-fit: contain;
 }
 
 .buttons {
@@ -49,6 +50,12 @@ body {
   color: white;
   border: none;
   border-radius: 5px;
+  cursor: pointer;
+}
+
+.stop-button:hover,
+#lever:hover {
+  background-color: #c00;
 }
 
 .message {
@@ -60,10 +67,4 @@ body {
 #score {
   margin-top: 10px;
   font-size: 18px;
-}
-
-.clear-message {
-  margin-top: 20px;
-  font-size: 24px;
-  color: yellow;
 }
