@@ -3,34 +3,32 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>MOTSU-SLO 3x3</title>
+  <title>MOTSU-SLO Mobile</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <div class="app">
-    <div class="info">CREDIT: <span id="score">100</span></div>
+    <div class="status-top">
+      <div class="credit-display">クレジット: <span id="score">100</span></div>
+    </div>
     
     <div class="slot-frame">
-      <div class="reel-container">
-        <div id="reel1" class="reel-strip"></div>
+      <div class="reel-container"><div id="reel1" class="reel-strip"></div></div>
+      <div class="reel-container"><div id="reel2" class="reel-strip"></div></div>
+      <div class="reel-container"><div id="reel3" class="reel-strip"></div></div>
+      <div class="guide-lines">
+        <div class="line middle"></div>
       </div>
-      <div class="reel-container">
-        <div id="reel2" class="reel-strip"></div>
-      </div>
-      <div class="reel-container">
-        <div id="reel3" class="reel-strip"></div>
-      </div>
-      <div class="center-line"></div>
     </div>
 
-    <div id="message" class="msg">TOUCH LEVER</div>
+    <div id="message" class="msg-area"></div>
 
     <div class="controls">
-      <button id="lever" class="btn-l">LEVER</button>
-      <div class="stops">
-        <button id="stop1" class="btn-s" disabled>1</button>
-        <button id="stop2" class="btn-s" disabled>2</button>
-        <button id="stop3" class="btn-s" disabled>3</button>
+      <button id="lever" class="btn-start">スタート</button>
+      <div class="stop-group">
+        <button id="stop1" class="btn-stop" disabled>左</button>
+        <button id="stop2" class="btn-stop" disabled>中</button>
+        <button id="stop3" class="btn-stop" disabled>右</button>
       </div>
     </div>
   </div>
