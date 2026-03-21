@@ -1,45 +1,39 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>MOTSU-SLO Mobile</title>
-  <link rel="stylesheet" href="style.css"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>MOTSU-SLO 3x3</title>
+  <link rel="stylesheet" href="style.css">
 </head>
 <body>
-  <div class="mobile-wrapper" id="panel">
-    <div class="header">THUNDER MOTSU</div>
+  <div class="app">
+    <div class="info">CREDIT: <span id="score">100</span></div>
     
-    <div class="slot-machine">
-      <div class="reel-window" id="window1"><div class="reel" id="reel1"></div></div>
-      <div class="reel-window" id="window2"><div class="reel" id="reel2"></div></div>
-      <div class="reel-window" id="window3"><div class="reel" id="reel3"></div></div>
-      <div class="payline"></div> </div>
+    <div class="slot-frame">
+      <div class="reel-container">
+        <div id="reel1" class="reel-strip"></div>
+      </div>
+      <div class="reel-container">
+        <div id="reel2" class="reel-strip"></div>
+      </div>
+      <div class="reel-container">
+        <div id="reel3" class="reel-strip"></div>
+      </div>
+      <div class="center-line"></div>
+    </div>
 
-    <div id="message" class="info-msg">READY</div>
+    <div id="message" class="msg">TOUCH LEVER</div>
 
-    <div class="input-area">
-      <button id="lever" class="lever-touch">LEVER</button>
-      <div class="stop-group">
-        <button id="stop1" class="stop-touch" disabled>1</button>
-        <button id="stop2" class="stop-touch" disabled>2</button>
-        <button id="stop3" class="stop-touch" disabled>3</button>
+    <div class="controls">
+      <button id="lever" class="btn-l">LEVER</button>
+      <div class="stops">
+        <button id="stop1" class="btn-s" disabled>1</button>
+        <button id="stop2" class="btn-s" disabled>2</button>
+        <button id="stop3" class="btn-s" disabled>3</button>
       </div>
     </div>
-
-    <div class="status-bar">
-      <div class="stat"><span class="label">CREDIT</span><span id="score">100</span></div>
-      <div id="bonus-lamp" class="lamp">BONUS</div>
-    </div>
   </div>
-
-  <audio id="se-lever" src="sounds/lever.mp3"></audio>
-  <audio id="se-notice" src="sounds/notice.mp3"></audio>
-  <audio id="se-stop" src="sounds/stop.mp3"></audio>
-  <audio id="se-replay" src="sounds/replay.mp3"></audio>
-  <audio id="se-hit" src="sounds/payout.mp3"></audio>
-  <audio id="se-big" src="sounds/big_bonus.mp3"></audio>
-
   <script src="script.js"></script>
 </body>
 </html>
