@@ -2,34 +2,34 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>THUNDER MOTSU - Test Play</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>MOTSU-SLO Mobile</title>
   <link rel="stylesheet" href="style.css"/>
 </head>
 <body>
-  <div class="game-container" id="panel">
-    <div class="header-logo">THUNDER MOTSU</div>
+  <div class="mobile-wrapper" id="panel">
+    <div class="header">THUNDER MOTSU</div>
     
-    <div class="slot-container">
+    <div class="slot-machine">
       <div class="reel-window" id="window1"><div class="reel" id="reel1"></div></div>
       <div class="reel-window" id="window2"><div class="reel" id="reel2"></div></div>
       <div class="reel-window" id="window3"><div class="reel" id="reel3"></div></div>
-    </div>
+      <div class="payline"></div> </div>
 
-    <div id="message" class="message">INSERT MEDAL</div>
-    
-    <div class="controls">
-      <button id="lever" class="lever-btn">LEVER ON</button>
-      <div class="stop-btns">
-        <button id="stop1" class="stop-button" disabled>STOP 1</button>
-        <button id="stop2" class="stop-button" disabled>STOP 2</button>
-        <button id="stop3" class="stop-button" disabled>STOP 3</button>
+    <div id="message" class="info-msg">READY</div>
+
+    <div class="input-area">
+      <button id="lever" class="lever-touch">LEVER</button>
+      <div class="stop-group">
+        <button id="stop1" class="stop-touch" disabled>1</button>
+        <button id="stop2" class="stop-touch" disabled>2</button>
+        <button id="stop3" class="stop-touch" disabled>3</button>
       </div>
     </div>
-    
-    <div class="display-panel">
-      <div id="score">CREDIT: 100</div>
-      <div id="bonus-lamp">BONUS</div>
+
+    <div class="status-bar">
+      <div class="stat"><span class="label">CREDIT</span><span id="score">100</span></div>
+      <div id="bonus-lamp" class="lamp">BONUS</div>
     </div>
   </div>
 
