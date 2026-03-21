@@ -1,41 +1,25 @@
 const IMG_URL = "https://raw.githubusercontent.com/TwinsIRIGUTi/Motusuro/main/images/";
 
-// リール配列：左リール(L)だけ三連Vあり
-const STRIP_L = ["V", "V", "V", "replay", "bar", "bell", "seven", "watermelon", "cherry", "replay", "V", "bell", "bar", "replay", "seven", "watermelon", "V", "cherry", "bar", "bell", "seven", "watermelon", "replay"];
-const STRIP_C = ["seven", "replay", "bar", "bell", "V", "watermelon", "cherry", "replay", "seven", "bell", "bar", "replay", "V", "watermelon", "seven", "cherry", "bar", "bell", "V", "watermelon", "replay"];
-const STRIP_R = ["bar", "replay", "V", "bell", "seven", "watermelon", "cherry", "replay", "bar", "bell", "V", "replay", "seven", "watermelon", "bar", "cherry", "V", "bell", "seven", "watermelon", "replay"];
-const STRIPS = [STRIP_L, STRIP_C, STRIP_R];
+// 実機配列を適用
+const STRIPS = [
+    ["V", "V", "V", "bar", "bell", "seven", "cherry", "cherry", "watermelon", "seven", "bell", "replay", "bar", "cherry", "watermelon", "V", "bell", "replay", "seven", "cherry", "watermelon"],
+    ["seven", "cherry", "bell", "V", "watermelon", "replay", "seven", "cherry", "bar", "bell", "V", "watermelon", "replay", "bar", "cherry", "bell", "V", "watermelon", "replay", "seven", "bar"],
+    ["bar", "cherry", "replay", "V", "bell", "seven", "watermelon", "cherry", "bar", "bell", "V", "replay", "seven", "watermelon", "bar", "cherry", "V", "bell", "seven", "watermelon", "replay"]
+];
 
 let state = { credit: 100, spinning: [false, false, false], pos: [0, 0, 0], timers: [], isReplay: false, flag: "NONE" };
 let big = { active: false, games: 0, jacIn: 0, jacGames: 0, inJac: false };
 
-// --- サウンドエンジン ---
+// サウンドエンジン（簡易）
 const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 function playSE(type) {
+    if (audioCtx.state === 'suspended') return;
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-
-    if (type === 'lever') { // レバー音
-        osc.type = 'square';
-        osc.frequency.setValueAtTime(440, audioCtx.currentTime);
-        osc.frequency.exponentialRampToValueAtTime(110, audioCtx.currentTime + 0.1);
-        gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
-        gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.1);
-    } else if (type === 'stop') { // 停止音
-        osc.type = 'triangle';
-        osc.frequency.setValueAtTime(150, audioCtx.currentTime);
-        gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
-        gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.05);
-    } else if (type === 'spin') { // 回転中（低音ループ用）
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(60, audioCtx.currentTime);
-        gain.gain.setValueAtTime(0.02, audioCtx.currentTime);
-        gain.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.03);
-    }
-    osc.start();
-    osc.stop(audioCtx.currentTime + 0.1);
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    if (type === 'lever') { osc.type = 'square'; osc.frequency.setValueAtTime(400, audioCtx.currentTime); gain.gain.setValueAtTime(0.05, audioCtx.currentTime); }
+    else if (type === 'stop') { osc.type = 'triangle'; osc.frequency.setValueAtTime(120, audioCtx.currentTime); gain.gain.setValueAtTime(0.1, audioCtx.currentTime); }
+    osc.start(); osc.stop(audioCtx.currentTime + 0.05);
 }
 
 function init() {
@@ -53,20 +37,20 @@ document.getElementById('lever').onclick = () => {
     if (state.spinning.includes(true)) return;
     if (audioCtx.state === 'suspended') audioCtx.resume();
 
+    // 設定5or6抽選
     const rnd = Math.random() * 65536;
     if (!big.active) {
         const setting = Math.random() < 0.5 ? 5 : 6;
         if (rnd < (setting === 6 ? 273 : 260)) state.flag = "BIG";
         else if (rnd < (setting === 6 ? 453 : 428)) state.flag = "REG";
-        else if (rnd < 10000) state.flag = "REPLAY";
-        else if (rnd < 15200) state.flag = "BELL";
-        else if (rnd < 16200) state.flag = "WATERMELON";
-        else if (rnd < 24400) state.flag = "CHERRY";
+        else if (rnd < 9000) state.flag = "REPLAY";
+        else if (rnd < 14000) state.flag = "BELL";
+        else if (rnd < 15000) state.flag = "WATERMELON";
+        else if (rnd < 23000) state.flag = "CHERRY";
         else state.flag = "NONE";
     } else {
-        // JAC中は100%リプレイフラグ
         if (big.inJac) state.flag = "JAC_REPLAY";
-        else if (rnd < 16384) state.flag = "REPLAY"; 
+        else if (rnd < 16384) state.flag = "REPLAY"; // JAC IN
         else if (rnd < 45000) state.flag = "BELL";
         else state.flag = "NONE";
         if (!big.inJac) big.games++;
@@ -79,15 +63,15 @@ document.getElementById('lever').onclick = () => {
     state.isReplay = false;
     updateUI();
     playSE('lever');
+    document.getElementById('message').textContent = big.active ? (big.inJac ? `JAC中 ${big.jacGames}/8` : `BIG小役ゲーム ${big.games}/30`) : "";
 
     [0, 1, 2].forEach(i => {
         state.spinning[i] = true;
         document.getElementById(`stop${i+1}`).disabled = false;
         state.timers[i] = setInterval(() => {
-            state.pos[i] = (state.pos[i] + 40) % (STRIPS[i].length * 80);
+            state.pos[i] = (state.pos[i] + 45) % (STRIPS[i].length * 80); // 速度微調整
             document.getElementById(`reel${i+1}`).style.transform = `translateY(-${state.pos[i]}px)`;
-            if (Math.random() < 0.1) playSE('spin');
-        }, 30);
+        }, 20);
     });
 };
 
@@ -98,47 +82,51 @@ document.getElementById('lever').onclick = () => {
         let targetPos = Math.round(state.pos[i] / 80);
         const strip = STRIPS[i];
 
+        // 実機同様の4コマ引き込み
         for (let slip = 0; slip <= 4; slip++) {
             let cp = (targetPos + slip) % strip.length;
-            let s = strip[cp];
-            // 左リール三連V引き込み
-            if (state.flag === "BIG" && i === 0 && s === "V" && strip[(cp+1)%21] === "V") { targetPos = cp; break; }
-            // フラグ合致停止
-            if ((state.flag === "BIG" && (s === "V" || s === "seven")) ||
-                (state.flag === "REG" && s === "bar") ||
-                (state.flag === "REPLAY" && s === "replay") ||
-                (state.flag === "JAC_REPLAY" && s === "replay") ||
-                (state.flag === "BELL" && s === "bell")) { targetPos = cp; break; }
+            // 左リール三連Vの最優先
+            if (state.flag === "BIG" && i === 0 && strip[cp]==="V" && strip[(cp+1)%21]==="V" && strip[(cp+2)%21]==="V") { targetPos = cp; break; }
+            // フラグ合致
+            if ((state.flag === "BIG" && (strip[cp]==="V" || strip[cp]==="seven")) ||
+                (state.flag === "REG" && strip[cp]==="bar") ||
+                (state.flag === "REPLAY" && strip[cp]==="replay") ||
+                (state.flag === "JAC_REPLAY" && strip[cp]==="replay") ||
+                (state.flag === "BELL" && strip[cp]==="bell") ||
+                (state.flag === "WATERMELON" && strip[cp]==="watermelon") ||
+                (state.flag === "CHERRY" && strip[cp]==="cherry")) { targetPos = cp; break; }
         }
 
         state.pos[i] = targetPos * 80;
         document.getElementById(`reel${i+1}`).style.transform = `translateY(-${state.pos[i]}px)`;
         state.spinning[i] = false;
         document.getElementById(`stop${i+1}`).disabled = true;
+
+        if (i === 0 && state.flag === "BIG" && strip[targetPos]==="V" && strip[(targetPos+1)%21]==="V") {
+            document.getElementById('message').textContent = "1確！三連V！！";
+        }
+
         if (!state.spinning.includes(true)) checkWin();
     };
 });
 
 function checkWin() {
-    const getS = (r, row) => STRIPS[r][(Math.round(state.pos[r]/80)+row)%STRIPS[r].length];
-    const reels = [[getS(0,0),getS(0,1),getS(0,2)],[getS(1,0),getS(1,1),getS(1,2)],[getS(2,0),getS(2,1),getS(2,2)]];
-    const lines = [[reels[0][1],reels[1][1],reels[2][1]],[reels[0][0],reels[1][0],reels[2][0]],[reels[0][2],reels[1][2],reels[2][2]],[reels[0][0],reels[1][1],reels[2][2]],[reels[0][2],reels[1][1],reels[2][0]]];
+    const getS = (rIdx, row) => STRIPS[rIdx][(Math.round(state.pos[rIdx]/80)+row)%STRIPS[rIdx].length];
+    const r = [[getS(0,0),getS(0,1),getS(0,2)],[getS(1,0),getS(1,1),getS(1,2)],[getS(2,0),getS(2,1),getS(2,2)]];
+    const lines = [[r[0][1],r[1][1],r[2][1]],[r[0][0],r[1][0],r[2][0]],[r[0][2],r[1][2],r[2][2]],[r[0][0],r[1][1],r[2][2]],[r[0][2],r[1][1],r[2][0]]];
 
-    let payout = 0;
-    let hitMsg = "";
-
+    let payout = 0; let msg = "";
     lines.forEach(l => {
         if (l[0] === l[1] && l[1] === l[2]) {
-            const s = l[0];
             if (big.active) {
-                if (big.inJac && s === "replay") { payout = 15; hitMsg = "JAC 15枚"; }
-                else if (!big.inJac && s === "replay") { big.inJac = true; big.jacIn++; hitMsg = "JAC IN!!"; }
-                else if (s === "bell") { payout = 15; hitMsg = "15枚ゲット"; }
+                if (big.inJac && l[0]==="replay") { payout=15; msg="JAC 15枚獲得"; }
+                else if (!big.inJac && l[0]==="replay") { big.inJac=true; big.jacIn++; msg="JAC IN!!"; }
+                else if (l[0]==="bell") { payout=15; msg="15枚獲得"; }
             } else {
-                if (s === "replay") { state.isReplay = true; hitMsg = "リプレイ"; }
-                else if (s === "V" || s === "seven") { big.active = true; big.games = 0; big.jacIn = 0; hitMsg = "BIG START!!"; document.getElementById('bonus-lamp').classList.add('on'); }
-                else if (s === "bar") { payout = 100; hitMsg = "REG 100枚"; document.getElementById('bonus-lamp').classList.add('on'); }
-                else if (s === "bell") { payout = 15; hitMsg = "15枚ゲット"; }
+                if (l[0]==="replay") { state.isReplay=true; msg="リプレイ"; }
+                else if (l[0]==="V" || l[0]==="seven") { big.active=true; big.games=0; big.jacIn=0; msg="BIG BONUS!!"; document.getElementById('bonus-lamp').classList.add('on'); }
+                else if (l[0]==="bar") { payout=100; msg="REG BONUS"; document.getElementById('bonus-lamp').classList.add('on'); }
+                else if (l[0]==="bell") { payout=15; msg="15枚獲得"; }
             }
         }
     });
@@ -148,11 +136,7 @@ function checkWin() {
         if (big.jacGames >= 8) { big.inJac = false; big.jacGames = 0; if (big.jacIn >= 3) endBig(); }
     }
     if (big.active && big.games >= 30 && !big.inJac) endBig();
-
-    if (hitMsg) {
-        state.credit += payout;
-        document.getElementById('message').textContent = hitMsg;
-    }
+    if (msg) { state.credit += payout; document.getElementById('message').textContent = msg; }
     updateUI();
 }
 
