@@ -1,7 +1,6 @@
 const CONFIG = {
     imgBaseUrl: "https://raw.githubusercontent.com/TwinsIRIGUTi/Motusuro/main/images/",
     symbols: ["V", "cherry", "bar", "bell", "seven", "watermelon", "replay"],
-    // サンダーV風 21コマ配列
     reelStrip: [
         "V", "replay", "bar", "bell", "seven", "watermelon", "replay",
         "V", "bell", "bar", "replay", "seven", "watermelon", "V", 
@@ -19,7 +18,7 @@ let state = {
     intervals: []
 };
 
-// 画像のプリロード
+// プリロード
 async function init() {
     const promises = CONFIG.symbols.map(name => {
         return new Promise(res => {
@@ -30,30 +29,21 @@ async function init() {
         });
     });
     await Promise.all(promises);
-    updateUI();
     [0,1,2].forEach(i => drawReel(i, 0));
-    console.log("Ready to play");
+    updateUI();
 }
 
 function drawReel(i, pos) {
     const sym = CONFIG.reelStrip[pos];
     const el = document.getElementById(`reel${i+1}`);
-    if (state.images[sym]) el.style.backgroundImage = `url(${state.images[sym]})`;
-}
-
-// スベリ制御
-function getStopPos(pressedPos) {
-    for (let slip = 0; slip <= 4; slip++) {
-        let checkPos = (pressedPos + slip) % 21;
-        let sym = CONFIG.reelStrip[checkPos];
-        if (state.bonusFlag && (sym === "V" || sym === "seven")) return checkPos;
-        if (sym === "watermelon" || sym === "replay") return checkPos;
+    if (state.images[sym]) {
+        el.style.backgroundImage = `url(${state.images[sym]})`;
     }
-    return pressedPos;
 }
 
 // レバーON
-document.getElementById('lever').addEventListener('click', () => {
+document.getElementById('lever').addEventListener('touchstart', (e) => {
+    e.preventDefault(); // スマホのダブルタップズーム防止
     if (state.isSpinning.includes(true)) return;
 
     if (state.isReplayMode) {
@@ -63,21 +53,16 @@ document.getElementById('lever').addEventListener('click', () => {
         state.credit -= 3;
     }
     
-    // 内部抽選
     if (!state.bonusFlag) state.bonusFlag = Math.random() < 0.03;
     
-    // 演出：予告音
     if (Math.random() < 0.3 || state.bonusFlag) playSound('se-notice');
     else playSound('se-lever');
 
-    // 状態リセット
     document.getElementById('panel').classList.remove('v-flash');
-    [1,2,3].forEach(i => document.getElementById(`window${i}`).classList.remove('dark'));
-
-    // スピン開始
-    state.isSpinning = [true, true, true];
-    [0,1,2].forEach(i => {
+    [1,2,3].forEach(i => {
+        document.getElementById(`window${i}`).classList.remove('dark');
         document.getElementById(`stop${i+1}`).disabled = false;
+        state.isSpinning[i] = true;
         state.intervals[i] = setInterval(() => {
             state.pos[i] = (state.pos[i] + 1) % 21;
             drawReel(i, state.pos[i]);
@@ -86,16 +71,18 @@ document.getElementById('lever').addEventListener('click', () => {
     updateUI();
 });
 
-// ストップボタン
+// ストップボタン（touchstartで反応速度アップ）
 [0,1,2].forEach(i => {
-    document.getElementById(`stop${i+1}`).addEventListener('click', () => {
+    document.getElementById(`stop${i+1}`).addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        if (!state.isSpinning[i]) return;
+
         clearInterval(state.intervals[i]);
-        state.pos[i] = getStopPos(state.pos[i]);
-        drawReel(i, state.pos[i]);
-        document.getElementById(`window${i+1}`).classList.add('dark');
         state.isSpinning[i] = false;
         document.getElementById(`stop${i+1}`).disabled = true;
+        document.getElementById(`window${i+1}`).classList.add('dark');
         playSound('se-stop');
+
         if (!state.isSpinning.includes(true)) checkResult();
     });
 });
@@ -131,7 +118,7 @@ function checkResult() {
 }
 
 function updateUI() {
-    document.getElementById('score').textContent = `CREDIT: ${state.credit}`;
+    document.getElementById('score').textContent = state.credit;
 }
 
 function playSound(id) {
