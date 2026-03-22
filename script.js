@@ -34,6 +34,8 @@ document.getElementById('lever').onclick = () => {
     if (state.spinning.includes(true) || (state.credit < 3 && !state.isReplay)) return;
     if (audioCtx.state === 'suspended') audioCtx.resume();
 
+    // --- 【追加】レバーオンで表示をクリア ---
+    document.getElementById('message').textContent = "";
     document.querySelectorAll('.reel-window').forEach(el => el.classList.remove('dark'));
     document.getElementById('main-frame').classList.remove('flash-active', 'flash-v-active');
 
@@ -41,7 +43,6 @@ document.getElementById('lever').onclick = () => {
 
     if (big.inJac || reg.active) {
         state.flag = "JAC_REPLAY";
-        // JACゲーム開始時にカウント（レバーONで1ゲーム消費）
         if (big.inJac) big.jacGames++;
         else if (reg.active) reg.jacGames++;
     } else if (big.active) {
@@ -79,7 +80,7 @@ document.getElementById('lever').onclick = () => {
 };
 
 [0, 1, 2].forEach(i => {
-    document.getElementById(`stop${i+1}`).onclick = () => {
+    document.getElementById('stop' + (i + 1)).onclick = () => {
         clearInterval(state.timers[i]);
         playSE('stop');
         document.getElementById(`reel${i+1}`).parentElement.classList.add('dark');
@@ -125,7 +126,7 @@ function checkWin() {
     let payout = 0; let msg = "";
 
     if (!big.active && !reg.active && (r[0][0] === "cherry" || r[0][1] === "cherry" || r[0][2] === "cherry")) {
-        payout = 2; msg = "チェリー 2枚";
+        payout = 2; msg = "梅割り 2枚";
     }
 
     const lines = [[r[0][1],r[1][1],r[2][1]],[r[0][0],r[1][0],r[2][0]],[r[0][2],r[1][2],r[2][2]],[r[0][0],r[1][1],r[2][2]],[r[0][2],r[1][1],r[2][0]]];
@@ -135,7 +136,7 @@ function checkWin() {
             if (big.active) {
                 if (big.inJac && s === "replay") { payout = 15; msg = "JAC 15枚"; }
                 else if (!big.inJac && s === "replay") { big.inJac = true; big.jacIn++; msg = "JAC IN!!"; big.jacGames = 0; }
-                else if (s === "bell") { payout = 8; msg = "ベル 8枚"; }
+                else if (s === "bell") { payout = 8; msg = "もつ焼き 8枚"; }
             } else if (reg.active) {
                 if (s === "replay") { payout = 15; msg = "JAC 15枚"; }
             } else {
@@ -148,32 +149,32 @@ function checkWin() {
                     reg.active = true; state.bonusFlag = "NONE"; reg.jacGames = 0; 
                     msg = "REG START!!"; document.getElementById('bonus-lamp').classList.add('on'); 
                 }
-                else if (s === "bell") { payout = 8; msg = "ベル 8枚"; }
-                else if (s === "watermelon") { payout = 15; msg = "スイカ 15枚"; }
+                else if (s === "bell") { payout = 8; msg = "もつ焼き 8枚"; }
+                else if (s === "watermelon") { payout = 15; msg = "オシンコ 15枚"; }
             }
         }
     });
 
-    // JAC進行管理（揃わなくてもゲーム数で終了）
     if (big.inJac) {
-        if (big.jacGames >= 8) { 
-            big.inJac = false; 
-            if (big.jacIn >= 3) { endBonus(); return; }
-        }
+        if (big.jacGames >= 8) { big.inJac = false; if (big.jacIn >= 3) { endBonus(); return; } }
     } else if (reg.active) {
         if (reg.jacGames >= 8) { endBonus(); return; }
     }
     
     if (big.active && !big.inJac && big.games >= 30) { endBonus(); return; }
     
-    if (msg) { state.credit += payout; document.getElementById('message').textContent = msg; }
+    if (msg) { 
+        state.credit += payout; 
+        let status = big.active ? (big.inJac ? ` [JAC中 ${big.jacGames}/8]` : ` [小役G ${big.games}/30]`) : "";
+        document.getElementById('message').textContent = msg + status;
+    }
     updateUI();
 }
 
 function endBonus() { 
     big.active = false; reg.active = false; big.inJac = false;
     document.getElementById('bonus-lamp').classList.remove('on'); 
-    document.getElementById('message').textContent = "ボーナス終了"; 
+    document.getElementById('message').textContent = "お会計（ボーナス終了）"; 
     updateUI();
 }
 
