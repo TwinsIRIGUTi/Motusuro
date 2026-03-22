@@ -1,8 +1,12 @@
 const IMG_URL = "https://raw.githubusercontent.com/TwinsIRIGUTi/Motusuro/main/images/";
 
+// 【初代サンダーV実機 配列データ】
 const STRIPS = [
+    // 左：3連Vは0,1,2番。15番にもV。
     ["V", "V", "V", "bar", "bell", "seven", "cherry", "cherry", "watermelon", "seven", "bell", "replay", "bar", "cherry", "watermelon", "V", "bell", "replay", "seven", "cherry", "watermelon"],
+    // 中：Vは3,10,16番。
     ["seven", "cherry", "bell", "V", "watermelon", "replay", "seven", "cherry", "bar", "bell", "V", "watermelon", "replay", "bar", "cherry", "bell", "V", "watermelon", "replay", "seven", "bar"],
+    // 右：Vは3,10,16番。
     ["bar", "cherry", "replay", "V", "bell", "seven", "watermelon", "cherry", "bar", "bell", "V", "replay", "seven", "watermelon", "bar", "cherry", "V", "bell", "seven", "watermelon", "replay"]
 ];
 
@@ -25,7 +29,8 @@ function playSE(type) {
 function init() {
     [1, 2, 3].forEach(id => {
         const el = document.getElementById(`reel${id}`);
-        el.innerHTML = [...STRIPS[id-1], ...STRIPS[id-1], ...STRIPS[id-1]].map(s => `<div class="symbol" style="background-image:url(${IMG_URL}${s}.png)"></div>`).join('');
+        const strip = STRIPS[id-1];
+        el.innerHTML = [...strip, ...strip, ...strip].map(s => `<div class="symbol" style="background-image:url(${IMG_URL}${s}.png)"></div>`).join('');
     });
     updateUI();
 }
@@ -34,21 +39,21 @@ document.getElementById('lever').onclick = () => {
     if (state.spinning.includes(true) || (state.credit < 3 && !state.isReplay)) return;
     if (audioCtx.state === 'suspended') audioCtx.resume();
 
-    // 演出リセット
     document.querySelectorAll('.reel-window').forEach(el => { el.classList.remove('dark', 'flash-active', 'flash-v-active'); });
+    document.getElementById('main-frame').classList.remove('flash-active', 'flash-v-active');
 
-    // 内部抽選 (実機設定6)
+    // --- 内部抽選（実機設定6ベース） ---
     const rnd = Math.random() * 65536;
     if (!big.active && !reg.active) {
         if (state.bonusFlag === "NONE") {
-            if (rnd < 250) state.bonusFlag = "BIG";
-            else if (rnd < 410) state.bonusFlag = "REG";
+            if (rnd < 250) state.bonusFlag = "BIG";       // 1/262
+            else if (rnd < 410) state.bonusFlag = "REG";   // 1/409
         }
         const rnd2 = Math.random() * 65536;
-        if (rnd2 < 8990) state.flag = "REPLAY";
-        else if (rnd2 < 14700) state.flag = "BELL";
-        else if (rnd2 < 15724) state.flag = "WATERMELON";
-        else if (rnd2 < 16748) state.flag = "CHERRY";
+        if (rnd2 < 8990) state.flag = "REPLAY";            // 1/7.29
+        else if (rnd2 < 14700) state.flag = "BELL";         // 1/11.5
+        else if (rnd2 < 15724) state.flag = "WATERMELON";   // 1/64
+        else if (rnd2 < 16748) state.flag = "CHERRY";       // 1/64 (ここを厳格化)
         else state.flag = "NONE";
     } else {
         if (big.inJac || reg.active) state.flag = "JAC_REPLAY";
@@ -77,29 +82,49 @@ document.getElementById('lever').onclick = () => {
     document.getElementById(`stop${i+1}`).onclick = () => {
         clearInterval(state.timers[i]);
         playSE('stop');
-        
-        // 消灯演出
         document.getElementById(`reel${i+1}`).parentElement.classList.add('dark');
 
         let targetPos = Math.round(state.pos[i] / 80);
         const strip = STRIPS[i];
+        const currentFlag = (big.active || reg.active) ? state.flag : state.bonusFlag;
+        
+        let finalPos = targetPos;
+        let found = false;
+
+        // 4コマ引き込み/蹴飛ばし制御
         for (let slip = 0; slip <= 4; slip++) {
             let cp = (targetPos + slip) % strip.length;
-            const currentFlag = (big.active || reg.active) ? state.flag : state.bonusFlag;
+            let s = strip[cp];
             let is3V = (i === 0 && strip[cp] === "V" && strip[(cp+1)%21] === "V" && strip[(cp+2)%21] === "V");
-            if (is3V && state.bonusFlag !== "BIG" && !big.active) continue;
-            if (currentFlag === "BIG" && is3V) { targetPos = cp; break; }
-            if ((currentFlag === "BIG" && (strip[cp] === "V" || strip[cp] === "seven")) ||
-                (currentFlag === "REG" && (strip[cp] === "bar")) ||
-                (state.flag === "REPLAY" && strip[cp] === "replay") ||
-                (state.flag === "JAC_REPLAY" && strip[cp] === "replay") ||
-                (state.flag === "BELL" && strip[cp] === "bell") ||
-                (state.flag === "WATERMELON" && strip[cp] === "watermelon") ||
-                (state.flag === "CHERRY" && i === 0 && strip[cp] === "cherry")) {
-                targetPos = cp; break;
+
+            // 1. ボーナスフラグ時：BIGなら三連Vを最優先で引き込む
+            if (currentFlag === "BIG" && is3V) { finalPos = cp; found = true; break; }
+            
+            // 2. 成立役の引き込み
+            if ((currentFlag === "BIG" && (s === "V" || s === "seven")) ||
+                (currentFlag === "REG" && s === "bar") ||
+                (state.flag === "REPLAY" && s === "replay") ||
+                (state.flag === "JAC_REPLAY" && s === "replay") ||
+                (state.flag === "BELL" && s === "bell") ||
+                (state.flag === "WATERMELON" && s === "watermelon") ||
+                (state.flag === "CHERRY" && i === 0 && s === "cherry")) {
+                finalPos = cp; found = true; break;
             }
         }
-        state.pos[i] = targetPos * 80;
+
+        // 3. 非成立時の「蹴飛ばし」：チェリーや三連Vが止まらない位置まで滑らせる
+        if (!found) {
+            for (let slip = 0; slip <= 4; slip++) {
+                let cp = (targetPos + slip) % strip.length;
+                let s = strip[cp];
+                let isCherry = (i === 0 && (s === "cherry" || strip[(cp+1)%21] === "cherry" || strip[(cp+2)%21] === "cherry"));
+                let is3V = (i === 0 && s === "V" && strip[(cp+1)%21] === "V" && strip[(cp+2)%21] === "V");
+                
+                if (!isCherry && !is3V) { finalPos = cp; break; }
+            }
+        }
+
+        state.pos[i] = finalPos * 80;
         document.getElementById(`reel${i+1}`).style.transform = `translateY(-${state.pos[i]}px)`;
         state.spinning[i] = false;
         document.getElementById(`stop${i+1}`).disabled = true;
@@ -109,17 +134,13 @@ document.getElementById('lever').onclick = () => {
 });
 
 function triggerFlash() {
-    const checkResult = checkWin();
-    const frame = document.querySelector('.slot-frame');
-    
-    // フラグに応じたフラッシュ
-    if (state.flag === "WATERMELON" || (state.bonusFlag !== "NONE" && Math.random() < 0.3)) {
+    const msg = checkWin();
+    const frame = document.getElementById('main-frame');
+    if (state.flag === "WATERMELON" || (state.bonusFlag !== "NONE" && Math.random() < 0.2)) {
         playSE('thunder');
-        frame.classList.add('flash-active'); // 落雷フラッシュ
-    } else if (state.flag === "CHERRY" || state.flag === "BELL") {
-        frame.classList.add('flash-active'); // ローリング
+        frame.classList.add('flash-active');
     } else if (state.bonusFlag === "BIG" && Math.random() < 0.1) {
-        frame.classList.add('flash-v-active'); // 闇V
+        frame.classList.add('flash-v-active');
     }
 }
 
@@ -128,6 +149,7 @@ function checkWin() {
     const r = [[getS(0,0),getS(0,1),getS(0,2)],[getS(1,0),getS(1,1),getS(1,2)],[getS(2,0),getS(2,1),getS(2,2)]];
     let payout = 0; let msg = "";
 
+    // チェリー判定
     if (!big.active && !reg.active && (r[0][0] === "cherry" || r[0][1] === "cherry" || r[0][2] === "cherry")) {
         payout = 2; msg = "チェリー 2枚";
     }
@@ -161,6 +183,9 @@ function checkWin() {
     if (big.active && big.games >= 30 && !big.inJac) endBonus();
     
     if (msg) { state.credit += payout; document.getElementById('message').textContent = msg; }
+    else if (state.bonusFlag !== "NONE") {
+        if (r[0][1] === "V" && r[2][1] === "V") document.getElementById('message').textContent = "リーチ目！？";
+    }
     updateUI();
     return msg;
 }
