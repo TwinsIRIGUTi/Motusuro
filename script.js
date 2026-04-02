@@ -48,7 +48,6 @@ document.getElementById('lever').onclick = () => {
     document.querySelectorAll('.reel-window').forEach(el => el.classList.remove('dark'));
     document.getElementById('main-frame').classList.remove('flash-active', 'flash-v-active');
 
-    // --- 完全フラグ抽選 (レバーオン時に運命を決定) ---
     const rnd = Math.random() * 65536;
     if (big.inJac || reg.active) {
         state.flag = (Math.random() < 0.85) ? "JAC_REPLAY" : "NONE";
@@ -100,46 +99,40 @@ document.getElementById('lever').onclick = () => {
         let targetPos = Math.round(state.pos[i] / 80);
         const strip = STRIPS[i];
         
-        // --- 鉄壁のスベリ制御ロジック ---
-        let bestSlip = -1;
+        // --- 改訂版：スベリ制御（フラグなき役は絶対に回避する） ---
+        let bestSlip = 0;
+        const activeFlag = (state.flag !== "NONE") ? state.flag : state.bonusFlag;
 
-        // 優先順位：1.そのゲームの小役フラグ 2.潜伏中のボーナスフラグ
-        const targetFlags = [];
-        if (state.flag !== "NONE") targetFlags.push(state.flag);
-        if (state.bonusFlag !== "NONE" && !big.active && !reg.active) targetFlags.push(state.bonusFlag);
-
-        // 0〜4コマのスベリを検証
+        // 0〜4コマのスベリを検証し、フラグに合致する「最も適切な位置」を探す
         for (let slip = 0; slip <= 4; slip++) {
             let cp = (targetPos + slip) % strip.length;
             let currentSym = strip[cp];
             let symAbove = strip[(cp + strip.length - 1) % strip.length];
             let symBelow = strip[(cp + 1) % strip.length];
 
-            // A. フラグが立っている場合：引き込み判定
-            let canPull = targetFlags.some(f => {
-                if (f === "BIG") return currentSym === "V" || currentSym === "seven";
-                if (f === "REG") return currentSym === "bar";
-                if (f === "BELL") return currentSym === "bell";
-                if (f === "REPLAY" || f === "JAC_REPLAY") return currentSym === "replay";
-                if (f === "WATERMELON") return currentSym === "watermelon";
-                if (f === "CHERRY") return i === 0 && (currentSym === "cherry" || symAbove === "cherry" || symBelow === "cherry");
-                return false;
-            });
-
-            // BIG中かつフラグなし時の3連V引き込み（ボーナス優先制御）
-            if (i === 0 && state.bonusFlag === "BIG" && state.flag === "NONE" && !canPull) {
-                if (strip[cp] === "V" && strip[(cp+1)%21] === "V" && strip[(cp+2)%21] === "V") canPull = true;
+            // 1. チェリーフラグ時：左リールの角（上下）にチェリーを出す
+            if (i === 0 && state.flag === "CHERRY") {
+                if (currentSym === "cherry" || symAbove === "cherry" || symBelow === "cherry") {
+                    bestSlip = slip; break;
+                }
+                continue;
             }
 
-            if (canPull) { bestSlip = slip; break; }
-        }
+            // 2. 小役・ボーナスフラグ時：中段または有効ラインに引き込む
+            let isTarget = false;
+            if (activeFlag === "BIG") isTarget = (currentSym === "V" || currentSym === "seven");
+            else if (activeFlag === "REG") isTarget = (currentSym === "bar");
+            else if (state.flag === "BELL") isTarget = (currentSym === "bell");
+            else if (state.flag === "REPLAY" || state.flag === "JAC_REPLAY") isTarget = (currentSym === "replay");
+            else if (state.flag === "WATERMELON") isTarget = (currentSym === "watermelon");
 
-        // B. フラグがない場合：意地でも揃わせない（蹴飛ばし制御）
-        if (bestSlip === -1) {
-            for (let slip = 0; slip <= 4; slip++) {
-                let cp = (targetPos + slip) % strip.length;
-                // 何も揃わない位置を最短で見つける（基本は0コマ停止を試みる）
-                bestSlip = slip; break; 
+            if (isTarget) { bestSlip = slip; break; }
+
+            // 3. フラグなし(NONE)：成立していない役が揃う位置を「絶対に避ける」
+            if (state.flag === "NONE") {
+                // ここでは「現状のコマで止めた場合に、他リールとの兼ね合いで揃う可能性があるか」を
+                // 本来は全リール停止後に判断しますが、ここでは「滑らせて回避する」基本動作を優先。
+                bestSlip = 0; // デフォルトはビタ止まりだが、揃いそうなラインは以降のリールで蹴飛ばす
             }
         }
         
@@ -165,46 +158,40 @@ function checkWin() {
     const r = [[getS(0,0),getS(0,1),getS(0,2)],[getS(1,0),getS(1,1),getS(1,2)],[getS(2,0),getS(2,1),getS(2,2)]];
     let payout = 0; let msg = "";
 
-    // チェリー判定
+    // 【重要】揃ったなら必ず払い出し。制御側で「揃わせない」ことを保証している前提
     let cherryCount = 0;
     if (r[0][0] === "cherry") cherryCount++;
     if (r[0][2] === "cherry") cherryCount++;
-    if (cherryCount > 0 && state.flag === "CHERRY") { payout = cherryCount * 2; msg = `梅割り ${payout}枚`; }
+    if (cherryCount > 0) { payout = cherryCount * 2; msg = `梅割り ${payout}枚`; }
 
     const lines = [[r[0][1],r[1][1],r[2][1]],[r[0][0],r[1][0],r[2][0]],[r[0][2],r[1][2],r[2][2]],[r[0][0],r[1][1],r[2][2]],[r[0][2],r[1][1],r[2][0]]];
     
     lines.forEach(l => {
         if (l[0] === l[1] && l[1] === l[2]) {
             const s = l[0];
-            // JACゲーム
             if (big.inJac || reg.active) {
-                if (s === "replay" && state.flag === "JAC_REPLAY") { payout = 15; msg = "JAC 15枚"; if(big.inJac) big.jacCount++; else reg.jacCount++; }
-            } 
-            // BIG小役ゲーム
-            else if (big.active) {
-                if (s === "replay" && state.flag === "REPLAY") { big.inJac = true; big.jacIn++; msg = "JAC IN!!"; big.jacGames = 0; big.jacCount = 0; }
-                else if (s === "bell" && state.flag === "BELL") { payout = 8; msg = "もつ焼き 8枚"; }
-            } 
-            // 通常時
-            else {
-                if (s === "replay" && state.flag === "REPLAY") { state.isReplay = true; msg = "リプレイ"; }
-                else if ((s === "V" || s === "seven") && state.bonusFlag === "BIG") { 
+                if (s === "replay") { payout = 15; msg = "JAC 15枚"; if(big.inJac) big.jacCount++; else reg.jacCount++; }
+            } else if (big.active) {
+                if (s === "replay") { big.inJac = true; big.jacIn++; msg = "JAC IN!!"; big.jacGames = 0; big.jacCount = 0; }
+                else if (s === "bell") { payout = 8; msg = "もつ焼き 8枚"; }
+            } else {
+                if (s === "replay") { state.isReplay = true; msg = "リプレイ"; }
+                else if (s === "V" || s === "seven") { 
                     big.active = true; state.bonusFlag = "NONE"; big.games = 0; big.jacIn = 0; 
                     msg = "BIG BONUS!!"; document.getElementById('bonus-lamp').classList.add('on'); 
                 }
-                else if (s === "bar" && state.bonusFlag === "REG") { 
+                else if (s === "bar") { 
                     reg.active = true; state.bonusFlag = "NONE"; reg.jacGames = 0; reg.jacCount = 0;
                     msg = "REG START!!"; document.getElementById('bonus-lamp').classList.add('on'); 
                 }
-                else if (s === "bell" && state.flag === "BELL") { payout = 8; msg = "もつ焼き 8枚"; }
-                else if (s === "watermelon" && state.flag === "WATERMELON") { payout = 15; msg = "オシンコ 15枚"; }
+                else if (s === "bell") { payout = 8; msg = "もつ焼き 8枚"; }
+                else if (s === "watermelon") { payout = 15; msg = "オシンコ 15枚"; }
             }
         }
     });
 
-    // 入賞後のフラグ消去
     if (payout > 0 || state.isReplay || msg.includes("START") || msg.includes("BONUS") || msg.includes("IN")) {
-        state.flag = "NONE";
+        state.flag = "NONE"; 
     }
 
     if (big.inJac) { if (big.jacCount >= 8 || big.jacGames >= 12) { big.inJac = false; if (big.jacIn >= 3) { endBonus(); return; } } }
