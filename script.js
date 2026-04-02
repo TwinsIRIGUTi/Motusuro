@@ -49,8 +49,10 @@ document.getElementById('lever').onclick = () => {
     document.getElementById('main-frame').classList.remove('flash-active', 'flash-v-active');
 
     const rnd = Math.random() * 65536;
+
+    // --- JACゲームの抽選仕様 (80%リプレイ / 20%ハズレ) ---
     if (big.inJac || reg.active) {
-        state.flag = (Math.random() < 0.85) ? "JAC_REPLAY" : "NONE";
+        state.flag = (Math.random() < 0.80) ? "JAC_REPLAY" : "NONE";
         if (big.inJac) big.jacGames++; else reg.jacGames++;
     } else if (big.active) {
         const rb = Math.random() * 100;
@@ -71,7 +73,7 @@ document.getElementById('lever').onclick = () => {
         else state.flag = "NONE";
     }
 
-    document.getElementById('debug-info').textContent = `内部フラグ: ${state.flag} / ボーナス内部成立: ${state.bonusFlag}`;
+    document.getElementById('debug-info').textContent = `フラグ: ${state.flag} / 内部成立: ${state.bonusFlag}`;
 
     if (!state.isReplay) state.credit -= 3;
     state.isReplay = false;
@@ -98,42 +100,34 @@ document.getElementById('lever').onclick = () => {
 
         let targetPos = Math.round(state.pos[i] / 80);
         const strip = STRIPS[i];
-        
-        // --- 改訂版：スベリ制御（フラグなき役は絶対に回避する） ---
         let bestSlip = 0;
-        const activeFlag = (state.flag !== "NONE") ? state.flag : state.bonusFlag;
 
-        // 0〜4コマのスベリを検証し、フラグに合致する「最も適切な位置」を探す
+        // --- JACリプレイ中段固定 & ハズレ蹴飛ばし制御 ---
+        const isJacGame = (big.inJac || reg.active);
+
         for (let slip = 0; slip <= 4; slip++) {
             let cp = (targetPos + slip) % strip.length;
-            let currentSym = strip[cp];
-            let symAbove = strip[(cp + strip.length - 1) % strip.length];
-            let symBelow = strip[(cp + 1) % strip.length];
-
-            // 1. チェリーフラグ時：左リールの角（上下）にチェリーを出す
-            if (i === 0 && state.flag === "CHERRY") {
-                if (currentSym === "cherry" || symAbove === "cherry" || symBelow === "cherry") {
-                    bestSlip = slip; break;
+            let currentSym = strip[cp]; // 中段
+            
+            if (isJacGame) {
+                if (state.flag === "JAC_REPLAY") {
+                    // JACフラグ成立時：全リール中段にリプレイを引き込む
+                    if (currentSym === "replay") { bestSlip = slip; break; }
+                } else {
+                    // ハズレ時：中段にリプレイが来ない位置、かつ全ラインで揃わない位置を選択
+                    if (currentSym !== "replay") { bestSlip = slip; break; }
                 }
                 continue;
             }
 
-            // 2. 小役・ボーナスフラグ時：中段または有効ラインに引き込む
-            let isTarget = false;
-            if (activeFlag === "BIG") isTarget = (currentSym === "V" || currentSym === "seven");
-            else if (activeFlag === "REG") isTarget = (currentSym === "bar");
-            else if (state.flag === "BELL") isTarget = (currentSym === "bell");
-            else if (state.flag === "REPLAY" || state.flag === "JAC_REPLAY") isTarget = (currentSym === "replay");
-            else if (state.flag === "WATERMELON") isTarget = (currentSym === "watermelon");
-
-            if (isTarget) { bestSlip = slip; break; }
-
-            // 3. フラグなし(NONE)：成立していない役が揃う位置を「絶対に避ける」
-            if (state.flag === "NONE") {
-                // ここでは「現状のコマで止めた場合に、他リールとの兼ね合いで揃う可能性があるか」を
-                // 本来は全リール停止後に判断しますが、ここでは「滑らせて回避する」基本動作を優先。
-                bestSlip = 0; // デフォルトはビタ止まりだが、揃いそうなラインは以降のリールで蹴飛ばす
-            }
+            // 通常・BIG小役ゲームの制御
+            const activeFlag = (state.flag !== "NONE") ? state.flag : state.bonusFlag;
+            if (activeFlag === "BIG" && (currentSym === "V" || currentSym === "seven")) { bestSlip = slip; break; }
+            if (activeFlag === "REG" && currentSym === "bar") { bestSlip = slip; break; }
+            if (state.flag === "REPLAY" && currentSym === "replay") { bestSlip = slip; break; }
+            if (state.flag === "BELL" && currentSym === "bell") { bestSlip = slip; break; }
+            if (state.flag === "WATERMELON" && currentSym === "watermelon") { bestSlip = slip; break; }
+            if (state.flag === "CHERRY" && i === 0 && (currentSym === "cherry" || strip[(cp+strip.length-1)%strip.length]==="cherry" || strip[(cp+1)%strip.length]==="cherry")) { bestSlip = slip; break; }
         }
         
         state.pos[i] = (targetPos + bestSlip) * 80;
@@ -158,7 +152,7 @@ function checkWin() {
     const r = [[getS(0,0),getS(0,1),getS(0,2)],[getS(1,0),getS(1,1),getS(1,2)],[getS(2,0),getS(2,1),getS(2,2)]];
     let payout = 0; let msg = "";
 
-    // 【重要】揃ったなら必ず払い出し。制御側で「揃わせない」ことを保証している前提
+    // チェリー判定
     let cherryCount = 0;
     if (r[0][0] === "cherry") cherryCount++;
     if (r[0][2] === "cherry") cherryCount++;
@@ -170,37 +164,31 @@ function checkWin() {
         if (l[0] === l[1] && l[1] === l[2]) {
             const s = l[0];
             if (big.inJac || reg.active) {
+                // JAC中段リプレイのみ15枚払い出し
                 if (s === "replay") { payout = 15; msg = "JAC 15枚"; if(big.inJac) big.jacCount++; else reg.jacCount++; }
             } else if (big.active) {
                 if (s === "replay") { big.inJac = true; big.jacIn++; msg = "JAC IN!!"; big.jacGames = 0; big.jacCount = 0; }
                 else if (s === "bell") { payout = 8; msg = "もつ焼き 8枚"; }
             } else {
                 if (s === "replay") { state.isReplay = true; msg = "リプレイ"; }
-                else if (s === "V" || s === "seven") { 
-                    big.active = true; state.bonusFlag = "NONE"; big.games = 0; big.jacIn = 0; 
-                    msg = "BIG BONUS!!"; document.getElementById('bonus-lamp').classList.add('on'); 
-                }
-                else if (s === "bar") { 
-                    reg.active = true; state.bonusFlag = "NONE"; reg.jacGames = 0; reg.jacCount = 0;
-                    msg = "REG START!!"; document.getElementById('bonus-lamp').classList.add('on'); 
-                }
+                else if (s === "V" || s === "seven") { big.active = true; state.bonusFlag = "NONE"; big.games = 0; big.jacIn = 0; msg = "BIG BONUS!!"; document.getElementById('bonus-lamp').classList.add('on'); }
+                else if (s === "bar") { reg.active = true; state.bonusFlag = "NONE"; reg.jacGames = 0; reg.jacCount = 0; msg = "REG START!!"; document.getElementById('bonus-lamp').classList.add('on'); }
                 else if (s === "bell") { payout = 8; msg = "もつ焼き 8枚"; }
                 else if (s === "watermelon") { payout = 15; msg = "オシンコ 15枚"; }
             }
         }
     });
 
-    if (payout > 0 || state.isReplay || msg.includes("START") || msg.includes("BONUS") || msg.includes("IN")) {
-        state.flag = "NONE"; 
-    }
+    if (payout > 0 || state.isReplay || msg.includes("START") || msg.includes("BONUS") || msg.includes("IN")) state.flag = "NONE";
 
+    // JAC終了判定：12G消化 または 8回入賞
     if (big.inJac) { if (big.jacCount >= 8 || big.jacGames >= 12) { big.inJac = false; if (big.jacIn >= 3) { endBonus(); return; } } }
     else if (reg.active) { if (reg.jacCount >= 8 || reg.jacGames >= 12) { endBonus(); return; } }
     if (big.active && !big.inJac && big.games >= 30) { endBonus(); return; }
 
     if (msg) { 
         state.credit += payout; 
-        let status = big.active ? (big.inJac ? ` [JAC ${big.jacCount}/8]` : ` [小役G ${big.games}/30]`) : (reg.active ? ` [JAC ${reg.jacCount}/8]` : "");
+        let status = big.active ? (big.inJac ? ` [JAC ${big.jacCount}/8 (${big.jacGames}/12)]` : ` [小役G ${big.games}/30]`) : (reg.active ? ` [JAC ${reg.jacCount}/8 (${reg.jacGames}/12)]` : "");
         document.getElementById('message').textContent = msg + status;
     } else if (state.bonusFlag !== "NONE") {
         if (lines.some(l => (l[0] === "V" && l[1] === "V") || (l[0] === "seven" && l[1] === "seven") || (l[0] === "bar" && l[1] === "bar")) || (r[0][0]==="V" && r[0][1]==="V" && r[0][2]==="V")) {
